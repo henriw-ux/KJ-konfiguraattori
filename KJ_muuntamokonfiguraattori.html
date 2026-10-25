@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KJ-muuntamokonfiguraattori – Helen | Caruna | Vantaan Energia</title>
+<style>
+:root{--ink:#1d2733;--mut:#5b6b7c;--line:#d7dee6;--bg:#f4f6f8;--card:#fff;--acc:#0b5cab;--ok:#1e8e3e;--warn:#b26a00;--err:#c5221f;--info:#0b5cab}
+*{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+header{background:#14212e;color:#fff;padding:14px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+header h1{font-size:18px;margin:0;font-weight:600}header small{opacity:.75}
+.wrap{display:grid;grid-template-columns:300px 1fr;gap:16px;padding:16px}
+@media(max-width:1100px){.wrap{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:16px}
+.card h2{font-size:15px;margin:0 0 10px;color:var(--acc)}
+label{display:block;font-size:12px;color:var(--mut);margin:8px 0 3px}
+input,select{width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:5px;font-size:13.5px;background:#fff}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chk{display:flex;align-items:center;gap:6px;margin-top:9px;font-size:13px;color:var(--ink)}.chk input{width:auto}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{border:1px solid var(--line);border-radius:6px;padding:9px 11px;background:#fafbfc}
+.kpi b{display:block;font-size:19px;margin-top:2px}.kpi span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.3px}
+.note{padding:7px 10px;border-left:4px solid;margin:6px 0;border-radius:3px;background:#fafbfc;font-size:13px}
+.note.ok{border-color:var(--ok)}.note.warn{border-color:var(--warn);background:#fff8ec}.note.err{border-color:var(--err);background:#fdeeee}.note.info{border-color:var(--info)}
+.note em{float:right;color:var(--mut);font-style:normal;font-size:11px;margin-left:8px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;vertical-align:top}th{background:#f0f3f6;font-weight:600}
+.btns{display:flex;gap:6px;flex-wrap:wrap;align-items:center}button{background:var(--acc);color:#fff;border:0;border-radius:5px;padding:6px 11px;cursor:pointer;font-size:12.5px}button.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}button.del{background:#fff;color:var(--err);border:1px solid var(--err)}
+#sld{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:6px}
+.edgrid{display:grid;grid-template-columns:1fr 290px;gap:10px;align-items:start}
+@media(max-width:1300px){.edgrid{grid-template-columns:1fr}}
+#lay{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:6px;max-height:820px}
+#lay svg{touch-action:none;user-select:none;width:100%;height:auto;display:block}
+#lay [data-k="el"]:hover,#lay [data-k="op"]:hover{filter:drop-shadow(0 0 3px #0b5cab)}
+.props{border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:#fafbfc;position:sticky;top:8px;font-size:13px}
+.props h3{margin:0 0 4px;font-size:14px;color:var(--acc)}.props .btns{margin-top:10px}.props hr{border:0;border-top:1px solid var(--line);margin:10px 0}
+.props .val{font-weight:600;color:var(--ink)}
+svg text{font-family:Segoe UI,Arial,sans-serif}
+.disc{font-size:11.5px;color:var(--mut);line-height:1.45}
+kbd{background:#eef1f4;border:1px solid #cfd6de;border-radius:3px;padding:0 4px;font-size:11px}
+@media print{.wrap{display:block}aside,.btns,.props{display:none}.edgrid{display:block}header{background:#fff;color:#000;border-bottom:2px solid #000}.card{break-inside:avoid;border:0}#lay{max-height:none}}
+</style>
+</head>
+<body>
+<header><div><h1>KJ-asiakasmuuntamon konfiguraattori</h1><small>Helen Sähköverkko · Caruna · Vantaan Energia Sähköverkot – esimitoitus, yksiviivakaavio ja muokattava tilalayout</small></div><small id="stamp"></small></header>
+<div class="wrap">
+<aside>
+ <div class="card"><h2>1. Verkkoyhtiö ja liittymä</h2>
+  <label>Verkkoyhtiö</label><select id="dso"><option value="helen">Helen Sähköverkko (Helsinki)</option><option value="caruna">Caruna / Caruna Espoo</option><option value="ves" selected>Vantaan Energia Sähköverkot</option></select>
+  <label>Jakelujännite</label><select id="U"></select>
+  <label>Kohde / hanke</label><input id="proj" value="Uusi kohde">
+ </div>
+ <div class="card"><h2>2. Teho</h2>
+  <div class="row"><div><label>Huipputeho P (kW)</label><input id="kW" type="number" value="1200" step="50"></div><div><label>cos φ</label><input id="pf" type="number" value="0.95" step="0.01" min="0.5" max="1"></div></div>
+  <div class="row"><div><label>Kasvuvaraus (%)</label><input id="growth" type="number" value="10" step="5"></div><div><label>Tuotanto (kVA)</label><input id="prodKVA" type="number" value="0" step="50"></div></div>
+ </div>
+ <div class="card"><h2>3. Muuntajat</h2>
+  <label>Käyttövarmuus</label><select id="redund"><option value="1">Ei varmennusta</option><option value="N+1">N+1 (yksi muuntaja voi olla poissa)</option></select>
+  <div class="row"><div><label>Muuntajia (0 = auto)</label><input id="nTf" type="number" value="0" min="0" max="8"></div><div><label>Max yksikkö (kVA)</label><input id="maxUnit" type="number" value="0" step="100"></div></div>
+  <div class="row"><div><label>Normaalikuorm. max %</label><input id="loadPct" type="number" value="80" step="5"></div><div><label>N+1 hätäkuorm. %</label><input id="emergPct" type="number" value="100" step="5"></div></div>
+  <div class="row"><div><label>Muuntajatyyppi</label><select id="tfType"><option>Kuivamuuntaja</option><option>Öljymuuntaja</option></select></div><div><label>uk (%)</label><input id="uk" type="number" value="6" step="0.5"></div></div>
+  <label class="chk"><input id="reserveTf" type="checkbox"> Varaus lisämuuntajalle</label>
+ </div>
+ <div class="card"><h2>4. Kojeisto ja verkko</h2>
+  <div class="row"><div><label>Alamuuntamolähtöjä</label><input id="subN" type="number" value="0" min="0" max="6"></div><div><label>Varakennoja</label><input id="spare" type="number" value="1" min="0" max="4"></div></div>
+  <div class="row"><div><label>Oma KJ-verkko (m)</label><input id="ownCableM" type="number" value="0" step="50"></div><div><label>Maasulku A/km</label><input id="efPerKm" type="number" value="0" step="0.1"></div></div>
+  <label class="chk" id="thirdWrap"><input id="thirdInc" type="checkbox"> VES: kolmas kalustettu liittymiskenno</label>
+ </div>
+ <div class="card"><h2>5. Layoutin lähtötiedot</h2>
+  <div class="row"><div><label>KJ-kojeiston syvyys</label><input id="swgDepth" type="number" value="1300" step="50"></div><div><label>PJ hoitokäytävä</label><input id="pjFront" type="number" value="1200" step="100"></div></div>
+  <label class="chk"><input id="comp" type="checkbox" checked> Kompensointi PJ-keskuksiin</label>
+  <label class="chk" id="kytWrap"><input id="indoorKyt" type="checkbox"> Caruna: sisäkytkemö rakennukseen</label>
+  <p class="disc">Nämä luovat automaattisen ehdotuksen. Editorissa tehdyt muutokset tallentuvat selaimeen kokoonpanokohtaisesti.</p>
+ </div>
+</aside>
+<main>
+ <div class="card"><h2 id="title">Tulos</h2><div class="kpis" id="kpis"></div><div id="conn" style="margin-top:10px"></div></div>
+ <div class="card"><h2>Muuntamon tilalayout – editori</h2>
+  <div class="btns" style="margin-bottom:8px">
+   <button onclick="dlLay()">Lataa layout SVG</button><button class="sec" onclick="copyItems()">Kopioi laiteluettelo</button>
+   <button class="sec" onclick="edUndo()">↶ Kumoa</button><button class="sec" onclick="edFit()">Sovita näkymä</button>
+   <button class="sec" onclick="if(confirm('Korvataanko käsin tehdyt muutokset uudella automaattisella ehdotuksella?'))edNew()">Uusi automaattinen ehdotus</button>
+   <select id="addRoomSel" style="width:auto"></select><button class="sec" onclick="edAddRoom()">+ Lisää tila</button>
+  </div>
+  <div class="disc" style="margin-bottom:6px"><b>Tila</b>: raahaa lattiasta (kiinnittyy naapuritilan seinään), muuta kokoa kahvoista tai syötä mitat paneeliin. <b>Laite</b>: raahaa vapaasti (myös toiseen tilaan), tuplaklikkaus tai <kbd>R</kbd> kiertää. <b>Ovi/säleikkö</b>: raahaa seinää pitkin tai toiselle seinälle. <b>Kiskosilta/kaapeli</b>: raahaa osuutta, tuplaklikkaus lisää tai poistaa taitepisteen. <kbd>Del</kbd> poistaa valinnan, nuolinäppäimet siirtävät 50 mm, <kbd>Ctrl+Z</kbd> kumoaa.</div>
+  <div id="clash"></div>
+  <div class="edgrid"><div id="lay"></div><div id="props" class="props"></div></div>
+  <h2 style="margin-top:14px">Tilat</h2><div id="layRooms"></div>
+  <div id="layNotes"></div>
+  <h2 style="margin-top:14px">Laiteluettelo</h2><div id="layItems"></div>
+ </div>
+ <div class="card"><h2>Yksiviivaesitys – KJ-kojeisto</h2>
+  <div class="btns" style="margin-bottom:8px"><button onclick="dlSVG()">Lataa SVG</button><button class="sec" onclick="window.print()">Tulosta / PDF</button><button class="sec" onclick="copyList()">Kopioi kennolista</button></div>
+  <div id="sld"></div>
+ </div>
+ <div class="card"><h2>Kojeistokoonpano</h2><div id="cellTbl"></div></div>
+ <div class="card"><h2>Suojaus ja mittaus</h2><div id="prot"></div></div>
+ <div class="card"><h2>Ohjeiden vaatimukset ja huomiot</h2><div id="notes"></div></div>
+ <div class="card"><h2>Verkkoyhtiölle toimitettavat dokumentit</h2><div id="docs"></div></div>
+ <div class="card"><h2>Lähteet ja rajaukset</h2><div class="disc" id="src"></div></div>
+</main>
+</div>
+<script>
+const f1 = v => (+v).toLocaleString('fi-FI', { maximumFractionDigits: 1 });
+const f0 = v => Math.round(v).toLocaleString('fi-FI');
+// ===== Muuntamokonfiguraattori – laskentalogiikka =====
+const STD_TF = [315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150];
+const STD_FUSE = [6.3, 10, 16, 20, 25, 31.5, 40, 50, 63, 80, 100, 125, 160, 200];
+const STD_CT = [10, 15, 20, 25, 30, 40, 50, 60, 75, 100, 150, 200, 300, 400, 600, 800];
+const DSO = {
+  helen: { key: 'helen', name: 'Helen Sähköverkko', short: 'Helen', voltages: [10, 20],
+    ohje: 'Keskijänniteliittymät 10–20 kV (voimassa 8.4.2025)', url: 'https://www.helensahkoverkko.fi/globalassets/hsv/dokumentit/hsv_su-ohje_keskijannite.pdf',
+    maxUnit: null, incoming: 2, vkeFuseMax: 63, vkeUnitMax: null, vkeVerified: false,
+    connection(S, U) {
+      if (U === 10) { if (S < 2500) return { lvl: 'ok', t: 'Liitetään pääsääntöisesti olemassa olevan 10 kV jakeluverkon johtolähtöön (alle 2,5 MVA).' };
+        if (S <= 7000) return { lvl: 'warn', t: 'Yli 2,5 MVA liittymä liitetään 10 kV verkossa pääsääntöisesti sähköasemalle (uusi johtolähtö). Pääsääntöinen maksimi 7,0 MVA.' };
+        return { lvl: 'err', t: 'Ylittää 10 kV verkon pääsääntöisen maksimiliittymäkoon 7,0 MVA – tapauskohtainen tarkastelu.' }; }
+      if (S < 5000) return { lvl: 'ok', t: 'Liitetään pääsääntöisesti olemassa olevan 20 kV jakeluverkon johtolähtöön (alle 5,0 MVA).' };
+      if (S <= 10000) return { lvl: 'warn', t: 'Yli 5,0 MVA liittymä liitetään 20 kV verkossa pääsääntöisesti sähköasemalle. Pääsääntöinen maksimi 10,0 MVA.' };
+      return { lvl: 'err', t: 'Ylittää 20 kV verkon pääsääntöisen maksimiliittymäkoon 10,0 MVA – tapauskohtainen tarkastelu.' };
+    },
+    ownership: 'Liittämiskohta (omistusraja) pääsääntöisesti asiakasmuuntamon liittymiskennojen liittimillä.',
+    docs: ['Asemapiirustus (muuntamon sijainti ja kaapelireitti)', 'Keskijännitepääkaavio', 'Energiamittauksen kytkentäkaavio', 'Kojeiston kokoonpano- ja mittapiirros', 'Muuntamotilan pohjakuva', 'Muuntamotilan leikkauskuva', 'Kaapelireitti', 'Maadoituskaavio', 'Kojeiston piirikaavio', 'Huipputeholaskelma'] },
+  caruna: { key: 'caruna', name: 'Caruna / Caruna Espoo', short: 'Caruna', voltages: [20],
+    ohje: 'Keskijänniteliittymien tekninen ohje CARUNA-020002766 (v1.0 16.12.2024 – v2.0 julkaistu 1.6.2026, tarkista muutokset)',
+    url: 'https://caruna.fi/sites/default/files/docs/Keskij%C3%A4nniteliittymien_tekninen_ohje.pdf',
+    maxUnit: 1600, incoming: 1, vkeFuseMax: 40, vkeUnitMax: 1000, vkeVerified: true,
+    ratings: [['Nimellisjännite', '24 kV'], ['Jännitekestoisuus (LI/AV)', '125/50 kV'], ['Nimellistaajuus', '50 Hz'], ['Terminen oikosulkukestoisuus', '16 kA / 1 s'], ['Dynaaminen oikosulkukestoisuus', '40 kA'], ['Pääkytkinlaitteen katkaisukyky', '16 kA']],
+    connection(S) {
+      if (S < 700) return { lvl: 'warn', t: 'KJ-liittymä on Carunalla tyypillisesti tarpeen vasta kun tehontarve ylittää 0,7 MVA (tuotanto 0,3 MVA) – tarkista pienjänniteliittymän mahdollisuus.' };
+      if (S < 5000) return { lvl: 'ok', t: 'Kytkemöliityntä: liitetään Carunan kytkemöön (ensisijaisesti ulos sijoitettava, toissijaisesti sisäkytkemö jolle verkkoyhtiöllä vapaa pääsy). Liittämiskohta kytkemön liittymiskennon liittimillä.' };
+      if (S <= 7000) return { lvl: 'warn', t: 'Raja-alue 5–7 MVA: kytkemö- tai sähköasemaliityntä – Caruna ratkaisee liitettävyystarkastelussa.' };
+      if (S <= 15000) return { lvl: 'warn', t: 'Sähköasemaliityntä: asiakkaan liittymisjohto Carunan sähköaseman 20 kV kennoon. Liittämiskohta sähköasemalla.' };
+      return { lvl: 'err', t: 'Yli 15 MVA liittymät liitetään lähtökohtaisesti suurjännitteiseen jakeluverkkoon.' };
+    },
+    ownership: 'Liittämiskohta Carunan kytkemön / sähköaseman liittymiskennon liittimillä. Asiakas omistaa ja rakentaa liittymisjohdon päätteineen.',
+    docs: ['Asemapiirustus (muuntamon sijainti, kaapelireitit, olemassa olevat muuntamot)', 'Liittymän huipputehoarvio ja kasvutarve', 'Yleistietolomake', 'Käytönjohtajan yhteystiedot', 'Lopullinen pääkaavio (johtotyypit, pituudet, laitetunnukset)', 'Maadoitusjärjestelmän dokumentaatio', 'Käyttöönottotarkastus- ja koestuspöytäkirjat', 'Relekoestuspöytäkirjat (releohjattu katkaisija)', 'Reitti-/lukitusohje (iLOQ NFCEXEC, C-taso)', 'Selvitys oman verkon maasulkuvirrasta ja sen kompensoinnista'] },
+  ves: { key: 'ves', name: 'Vantaan Energia Sähköverkot', short: 'VES', voltages: [20],
+    ohje: 'Keskijänniteliittymät (4.9.2026), Keskijännitekojeistojen pääkaaviot, Asiakasmuuntamon relesuojaus (4.6.2025)',
+    url: 'https://www.vantaanenergiasahkoverkot.fi/ammattilaisille/ohjeet/',
+    maxUnit: null, incoming: 2, vkeFuseMax: 63, vkeUnitMax: null, vkeVerified: true,
+    connection() { return { lvl: 'ok', t: 'Liitetään VES:n 20 kV jakeluverkkoon; verkkokaapelit liittymiskennoihin asiakkaan KJ-kojeistossa. Liittymistapa ja -piste vahvistetaan VES:n kanssa.' }; },
+    ownership: 'Liittymiskennojen kenno- ja kytkinlaitetunnukset, kaapelilajitiedot ja lähtöjen osoitteet merkitsee VES.',
+    docs: ['Asemapiirustus (pää- ja alamuuntamot, KJ-putkitusreitit, vetomontut, oman KJ-verkon pituus m)', 'Muuntamon rakenne- ja suunnitelmapiirustukset', 'Maadoituskaavio', 'Muuntamon tasopiirustus / puistomuuntamon lay-out', 'KJ-pääkaavio ja kojeiston rakennekuva', 'KJ-liittymisteho (muuntajien yhteisteho)', 'Kaukokäytön ala-asemaa syöttävän PJ-keskuksen pääkaavio', 'Valmistajan lopulliset piirustukset (kaukokäytön ohjauspiirit, riviliittimet)', 'Yleiskytkentäkaavio (jos alamuuntamoita)', 'Relekoestuspöytäkirjat VES:n hyväksyttäväksi'] },
+};
+const ceilStd = (v, list) => list.find(x => x >= v - 1e-9) ?? null;
+const In = (kVA, kV) => kVA / (Math.sqrt(3) * kV);
+function compute(inp) {
+  const d = DSO[inp.dso];
+  const U = d.voltages.includes(inp.U) ? inp.U : d.voltages[d.voltages.length - 1];
+  const S = Math.max(1, inp.kW / Math.max(0.5, Math.min(1, inp.pf)) * (1 + inp.growth / 100));
+  const notes = []; const N = (lvl, t, src) => notes.push({ lvl, t, src });
+  const maxUnit = inp.maxUnit || d.maxUnit || 2500; const kLoad = inp.loadPct / 100;
+  let n = inp.nTf, unit;
+  const needUnit = k => inp.redund === 'N+1' ? S / Math.max(1, k - 1) / (inp.emergPct / 100) : S / k / kLoad;
+  const minN = inp.redund === 'N+1' ? 2 : 1;
+  if (!n || n < minN) { for (n = minN; n <= 8; n++) if (ceilStd(needUnit(n), STD_TF.filter(x => x <= maxUnit))) break; }
+  unit = ceilStd(needUnit(n), STD_TF.filter(x => x <= maxUnit)) || ceilStd(needUnit(n), STD_TF) || 3150;
+  if (unit > maxUnit) N('err', `Yksikkökoko ${unit} kVA ylittää rajan ${maxUnit} kVA – lisää muuntajien lukumäärää.`, d.short);
+  const Stot = n * unit, loadNormal = S / Stot * 100;
+  const fuse = ceilStd(In(unit, U) * 1.35, STD_FUSE); const Itot = In(Stot, U);
+  const sub = inp.subN > 0, prod = inp.prodKVA || 0;
+  let main = 'CB'; const mainWhy = [];
+  if (n === 1 && !sub && !inp.reserveTf) { let ok = fuse <= d.vkeFuseMax; if (d.vkeUnitMax && unit > d.vkeUnitMax) ok = false; if (d.key === 'caruna' && prod >= 300) ok = false; if (ok) main = 'VKE'; }
+  if (main === 'CB') {
+    if (n > 1) mainWhy.push('useampi kuin yksi muuntaja');
+    if (sub) mainWhy.push('liittymän takana alamuuntamo(ita) / muuntamotilan ulkopuolista KJ-verkkoa');
+    if (inp.reserveTf) mainWhy.push('varaus lisämuuntajalle');
+    if (fuse > d.vkeFuseMax) mainWhy.push(`KJ-sulake ${fuse} A > ${d.vkeFuseMax} A`);
+    if (d.vkeUnitMax && unit > d.vkeUnitMax) mainWhy.push(`muuntaja > ${d.vkeUnitMax} kVA`);
+    if (d.key === 'caruna' && prod >= 300) mainWhy.push('≥300 kVA rinnankäyvä tuotanto → suojaus KJ-puolelle');
+  }
+  if (main === 'VKE') N(d.vkeVerified ? 'ok' : 'warn', d.key === 'caruna' ? `Pääkytkimeksi kelpaa varokekuormanerotin: 1 muuntamo, 1 muuntaja ≤ 1000 kVA ja KJ-sulake ≤ 40 A (valittu ${fuse} A).`
+    : d.key === 'ves' ? `Pääkytkimeksi kelpaa varokekuormanerotin: yksi muuntaja, KJ-sulake ≤ 63 A (valittu ${fuse} A). Sulakkeen toiminnan tulee avata VKE kolminapaisesti.`
+    : 'Varokekuormanerotin pääkytkimenä mahdollinen yhden muuntajan muuntamossa – tarkista raja-arvot Helenin ohjeen kohdasta 5.3.3 (Pääkytkinkenno).', d.short);
+  else N('info', `Pääkytkinlaitteena releohjattu katkaisija (${mainWhy.join(', ') || 'valittu'}).`, d.short);
+  const direct = main === 'VKE' || (n === 1 && !inp.reserveTf && !sub);
+  const tfFeeder = direct ? 'none' : (fuse > 63 ? 'CB' : 'VKE');
+  if (main === 'CB' && n >= 2) N('info', `Muuntajakohtaiset suojalaitteet jokaiselle muuntajalle (${tfFeeder === 'VKE' ? 'varokekuormanerotin, sulake ' + fuse + ' A' : 'katkaisija + rele, koska sulakekoko > 63 A'}).`, d.key === 'caruna' ? 'Caruna 7.4.4' : 'Yleinen käytäntö');
+  if (main === 'CB' && direct) N('info', 'Yksi muuntaja: pääkatkaisija voi toimia myös muuntajan suojana' + (d.key === 'caruna' ? ' (Caruna 7.4.4).' : ' (varmista verkkoyhtiöltä).'), d.short);
+  const relay = [];
+  if (main === 'CB') {
+    relay.push('I>, I>> (50/51) – vähintään 2-portainen ylivirtasuoja');
+    if (d.key === 'ves') { if (n > 1 || sub) relay.push('Io> (51N) – maasulkusuoja, ensisijaisesti suuntaamaton, kaapelivirtamuuntaja; asettelu > oman verkon maasulkuvirta'); }
+    else if (sub && d.key === 'caruna') { relay.push('Io>→ (67N) – suunnattu maasulkusuoja'); relay.push('Katkeilevan maasulun suoja (67NIEF)'); }
+    else relay.push('Io> (50N/51N) – vähintään 1-portainen maasulkusuoja');
+    if (d.key === 'caruna') relay.push('Häiriötallennin käyttöön');
+    if (prod >= 300 && d.key === 'caruna') relay.push('U<, U>, f<, f>, U0> (27/59/81/59N) liitäntäsuojaus; suositus LoM ja U2');
+    relay.push('Varmennettu apusähkö releelle ja katkaisijan ohjaukselle (DC-keskus/akusto)');
+  }
+  if (d.key === 'ves' && main === 'VKE') relay.push('Ylivirtasuojaus varokekuormanerottimella; maasulkusuojaa ei vaadita (1 muuntaja, ei ulkopuolista 20 kV verkkoa)');
+  const efFactor = inp.efPerKm || (U === 20 ? 3.0 : 2.0); const Ie = inp.ownCableM / 1000 * efFactor;
+  if (d.key === 'caruna' && Ie > 5) N('err', `Oman KJ-verkon arvioitu maasulkuvirta ${Ie.toFixed(1)} A > 5 A → 5 A ylittävä osuus kompensoitava kiinteällä kuristimella.`, 'Caruna 7.7');
+  else if (inp.ownCableM > 0) N('info', `Oman KJ-verkon arvioitu kapasitiivinen maasulkuvirta ≈ ${Ie.toFixed(2)} A (${efFactor} A/km, ohjeellinen – tarkista kaapelivalmistajalta).`, 'Arvio');
+  if (prod >= 50 && d.key === 'caruna') N('warn', '≥50 kVA tuotanto: erillinen liitäntäsuojausjärjestelmä, ei integroituna tuotantoyksiköihin' + (prod >= 300 ? '; ≥300 kVA: mittaukset ja suojalaite KJ-puolelle, varmennettu apusähkö.' : '; KJ-puolen toteutus suositeltava.'), 'Caruna 7.4.2');
+  else if (prod > 0) N('warn', 'Rinnankäyvä tuotanto: liitäntäsuojaus verkkoyhtiön tuotanto-ohjeen, Fingridin VJV/SJV:n ja SFS-EN 50549-2:n mukaan.', d.short);
+  if (d.key === 'caruna') {
+    if (unit > 1000) N('warn', 'Yksittäisen muuntajan teho > 1000 kVA lisää suunnittelutarvetta – ilmoita Carunalle aikaisin.', 'Caruna 6');
+    if (n > 1) N('warn', 'Enemmän kuin yksi muuntaja – ilmoita Carunalle aikaisessa vaiheessa.', 'Caruna 6');
+    N('info', 'Liittymiskaapeli on pystyttävä työmaadoittamaan kaapelin suuntaan maadoituskytkimellä/-erottimella. Pääkytkinlaitteen tulee sijaita ennen energiamittauksen mittamuuntajia.', 'Caruna 7.2–7.3');
+    N('info', 'Lukitus verkonhaltijan avainsarjaan (iLOQ NFCEXEC, C-taso); pääsy 24/7. Kytkentään varattava ≥15 työpäivää dokumenttien jälkeen.', 'Caruna 8, 10');
+  }
+  if (d.key === 'ves') {
+    N('info', 'Uusien KJ-kojeistojen oltava SF6-vapaita 2026 alusta (EU F-kaasuasetus).', 'VES pääkaaviot');
+    N('info', 'Liittymiskennoihin: moottoriohjaimet (24 VDC VES:n kaukokäytön ala-asemalta), kaasunpaineen mittaus, oikosulkuilmaisimet, kapasitiiviset jänniteilmaisimet.', 'VES pääkaaviot');
+    N('info', 'Kaapelikenkien kiinnityskohta ~1500 mm kanaalin/asennuslattian pohjasta – muuten kojeisto sokkelille. Ei metallisia kaapelikiinnikkeitä; KOZ-kiinnikkeet AHXAMK 3×185 / 3×240.', 'VES pääkaaviot');
+    N('info', 'Suunnitelmat PDF:nä: sahkosuunnitelmat@vantaanenergia.fi', 'VES ohje 2');
+  }
+  if (d.key === 'helen') {
+    N('info', 'Liittymiskennot, pääkytkinkenno, mittauskenno, releasettelu ja maasulkusuojaus Helenin ohjeen luvut 5.3–7 ja pääkaaviot luku 8.', 'Helen');
+    if (U === 10) N('warn', '10 kV verkko: kojeisto ja muuntajat mitoitetaan 10 kV:lle – selvitä mahdollinen tuleva 20 kV muutos (kaksoisjännitemuuntaja).', 'Suunnitteluhuomio');
+  }
+  const conn = d.connection(S, U);
+  if (inp.redund === '1' && Stot / S > 2.2) N('warn', 'Asennettu muuntajateho yli 2× huipputeho – Helen ja muut korostavat ylimitoituksen välttämistä.', 'Helen 1');
+  const ctMeas = ceilStd(Itot * 1.2, STD_CT); const lvIn = In(unit, 0.4); const ik = lvIn / (inp.uk / 100) / 1000;
+  const cells = [];
+  if (d.key === 'caruna') cells.push({ t: 'CINC', name: 'Liittymisjohdon kenno', w: 500 });
+  else for (let i = 0; i < d.incoming; i++) cells.push({ t: 'INC', name: `Liittymiskenno ${i + 1}`, w: 500 });
+  if (d.key === 'ves' && inp.thirdInc) cells.push({ t: 'INC', name: 'Liittymiskenno 3 (VES)', w: 500 });
+  cells.push(main === 'VKE' ? { t: 'MVKE', name: 'Pääkytkin (VKE)', w: 500 } : { t: 'MCB', name: 'Pääkatkaisija', w: 750 });
+  cells.push({ t: 'MEAS', name: 'Mittauskenno', w: 750 });
+  if (!direct) {
+    for (let i = 0; i < n; i++) cells.push({ t: tfFeeder === 'CB' ? 'TCB' : 'TVKE', name: `Muuntajalähtö T${i + 1}`, w: tfFeeder === 'CB' ? 750 : 500, idx: i + 1 });
+    for (let i = 0; i < inp.subN; i++) cells.push({ t: 'SUB', name: `Alamuuntamolähtö ${i + 1}`, w: 750 });
+    for (let i = 0; i < inp.spare; i++) cells.push({ t: 'SPARE', name: 'Varaus', w: 500 });
+  }
+  const swgLen = cells.reduce((a, c) => a + c.w, 0);
+  if (direct && inp.spare > 0) N('info', 'Laajennusvaraus: suora muuntajaliityntä ilman kiskoa – varaa tila kojeiston jatkamiselle tai valitse "varaus lisämuuntajalle".', 'Suunnitteluhuomio');
+  return { direct, d, U, S, n, unit, Stot, loadNormal, fuse, Itot, main, tfFeeder, relay, notes, conn, ctMeas, lvIn, ik, cells, swgLen, Ie, inp, prod };
+}
+
+// ===== Muuntamon tilaeditori (vapaa malli) =====
+// Malli: tilat (absoluuttiset sisämitat mm), laitteet (tilan paikalliset koordinaatit), aukot (ovet/IV/läpiviennit seinillä),
+// liitännät (kiskosillat, KJ-kaapelit, yhdys, kaapelihylly) muokattavine reittipisteineen.
+const TF_DIM = {
+  315: [1350, 800, 1450], 400: [1400, 850, 1500], 500: [1450, 850, 1600], 630: [1500, 900, 1700], 800: [1650, 950, 1800],
+  1000: [1700, 1000, 1950], 1250: [1800, 1000, 2050], 1600: [1950, 1100, 2200], 2000: [2050, 1200, 2350], 2500: [2200, 1300, 2500], 3150: [2400, 1400, 2600]
+};
+const WALL = 200, SNAP = 50;
+const snap = v => Math.round(v / SNAP) * SNAP;
+const C4 = (t, r, b, l) => ({ t, r, b, l });
+const ROT4 = (c, k) => { const a = [c.t, c.r, c.b, c.l]; const n = [0, 1, 2, 3].map(i => a[((i - k) % 4 + 4) % 4]); return { t: n[0], r: n[1], b: n[2], l: n[3] }; };
+const EDEF = {
+  swg: { n: 'KJ-kojeisto', lab: 'KJ', h: 2200, clear: C4(300, 500, 1500, 500), src: 'Valmistaja; huoltovälit Granlund-käytäntö' },
+  tf: { n: 'Muuntaja', lab: 'T', clear: C4(500, 500, 800, 500), src: 'Valmistaja (mitat ohjeelliset)' },
+  tfres: { n: 'Muuntajavaraus', lab: 'Varaus', clear: C4(500, 500, 800, 500), src: 'Laajennusvaraus' },
+  board: { n: 'PJ-pääkeskus', lab: 'PJ', w: 2400, d: 800, h: 2200, clear: C4(0, 0, 1200, 0), src: 'Arvio; hoitokäytävä SFS 6000-7-729' },
+  dc: { n: 'DC-keskus + akusto', lab: 'DC', w: 800, d: 350, h: 1800, clear: C4(0, 0, 800, 0), src: 'Releen ja katkaisijan varmennettu apusähkö' },
+  rtu: { n: 'Kaukokäytön ala-asema (VES)', lab: 'RTU', w: 800, d: 400, h: 2000, clear: C4(0, 0, 800, 0), fill: '#fff0c2', src: 'VES ohje 2: tilavaraus mittoineen + ryhmäjohto' },
+  mit: { n: 'Energiamittauksen kotelo', lab: 'MIT', w: 600, d: 300, h: 800, clear: C4(0, 0, 800, 0), fill: '#fff0c2', src: 'Verkkoyhtiön mittausohje' },
+  ok: { n: 'Valaistus-/pistorasiakeskus', lab: 'OK', w: 500, d: 200, h: 600, clear: C4(0, 0, 800, 0), src: 'SFS 6001' },
+  okrk: { n: 'Omakäyttö-RK', lab: 'RK', w: 600, d: 250, h: 1000, clear: C4(0, 0, 800, 0), src: 'Suunnitteluhuomio' },
+  pe: { n: 'Maadoituskisko (PE)', lab: 'PE', w: 800, d: 60, h: 300, clear: C4(0, 0, 0, 0), fill: '#1e8e3e', src: 'Maadoituskaavio' },
+  samm: { n: 'Sammutin + työmaadoitusvälineet', lab: 'S', w: 400, d: 150, h: 1200, clear: C4(0, 0, 0, 0), fill: '#f4c7c3', src: 'SFS 6001 / SFS 6002' },
+  ups: { n: 'UPS-laitteisto', lab: 'UPS', w: 1200, d: 850, h: 2000, clear: C4(300, 0, 1000, 0), src: 'Valmistaja' },
+  akku: { n: 'Akkukaappi', lab: 'AKKU', w: 1200, d: 800, h: 2000, clear: C4(0, 0, 1000, 0), src: 'Valmistaja' },
+  komp: { n: 'Kompensointikaappi', lab: 'KOMP', w: 800, d: 600, h: 2200, clear: C4(0, 0, 1000, 0), src: 'Valmistaja' },
+  vv: { n: 'Varavoimakone', lab: 'VV', w: 3500, d: 1500, h: 2200, clear: C4(1000, 1000, 1000, 1000), src: 'Valmistaja' },
+  kaappi: { n: 'Muu kaappi / laite', lab: 'LAITE', w: 800, d: 600, h: 2000, clear: C4(0, 0, 800, 0), src: '—' },
+  kyt: { n: 'Carunan kojeisto', lab: 'Caruna', w: 2000, d: 900, h: 2000, clear: C4(300, 500, 1500, 500), fill: '#e4f2da', src: 'Caruna 5.2' },
+};
+const ADDABLE = ['tf', 'board', 'dc', 'rtu', 'mit', 'ok', 'okrk', 'pe', 'samm', 'ups', 'akku', 'komp', 'vv', 'kaappi'];
+const ROOM_PRESETS = { tyhja: ['Uusi tila', 3000, 3000], muuntaja: ['Muuntajatila', 3200, 3500], ups: ['UPS-tila', 4000, 3500], akku: ['Akkutila', 3000, 3000], vv: ['Varavoimakonehuone', 6000, 4500], kytkemo: ['Kytkemö', 3600, 3600] };
+const OPLAB = { ovi: 'ovi', iv_tulo: 'IV tulo (alas)', iv_poisto: 'IV poisto (ylös)', lapivienti: 'läpivienti' };
+const FLOORS = [['ei', 'Ei (betonilaatta)'], ['kanaali', 'Kaapelikanaali laitteiden alla'], ['asennuslattia', 'Asennuslattia (koko tila)']];
+
+function mkEl(M, type, room, x, y, o = {}) {
+  const D = EDEF[type];
+  const e = { id: type + (M.seq++), room, type, name: D.n, w: D.w || 1000, d: D.d || 600, h: D.h || 2000, rot: 0, clear: { ...(D.clear || C4(0, 0, 800, 0)) }, x, y, ...o };
+  M.els.push(e); return e;
+}
+function mkOpen(M, R, type, side, off, w, o = {}) {
+  const p = { id: 'o' + (M.seq++), type, side, off, w, h: type === 'ovi' ? 2400 : 600, dbl: false, dir: 'ulos', hinge: 'v', label: OPLAB[type], ...o };
+  R.open.push(p); return p;
+}
+function mkRoom(M, id, name, kind, x, y, W, H, o = {}) {
+  const R = { id, name, kind, x, y, W, H, floor: 'ei', floorD: 600, topClear: 600, ceil: null, open: [], ...o };
+  M.rooms.push(R); return R;
+}
+
+// ---------- automaattinen ehdotus ----------
+function proposal(r, o) {
+  const M = { v: 4, rooms: [], els: [], conns: [], seq: 1 };
+  const d = r.d, oil = o.tfType === 'Öljymuuntaja';
+  const td = TF_DIM[r.unit] || TF_DIM[3150];
+  const tf = { L: Math.round(td[0] * (oil ? .95 : 1)), W: Math.round(td[1] * (oil ? .95 : 1)), H: td[2] };
+  const nBay = r.n + (r.inp.reserveTf ? 1 : 0);
+  let x = 0; const row = [];
+  if (d.key === 'caruna' && o.indoorKyt) {
+    const R = mkRoom(M, 'KYT', 'Carunan sisäkytkemö', 'kyt', x, 0, 3600, 3600, { floor: 'kanaali', floorD: 800 });
+    mkEl(M, 'kyt', 'KYT', 500, 300, { id: 'KYTSWG' });
+    mkOpen(M, R, 'ovi', 't', 3600 - 1500, 1200, { label: 'Caruna 24/7' });
+    row.push(R); x += 3600 + WALL;
+  }
+  const eq = [];
+  if (r.main === 'CB' || r.tfFeeder === 'CB' || r.inp.subN > 0) eq.push('dc');
+  if (d.key === 'ves') eq.push('rtu');
+  eq.push('mit', 'ok');
+  const eqLen = eq.reduce((a, t) => a + EDEF[t].w + 200, 0) + 1000;
+  const swgD = o.swgDepth, maxDp = Math.max(...eq.map(t => EDEF[t].d));
+  const kjW = Math.max(500 + r.swgLen + 1000, eqLen, 3200), kjH = 300 + swgD + 1500 + maxDp;
+  const KJ = mkRoom(M, 'KJ', 'KJ-kojeistotila', 'kj', x, 0, kjW, kjH, { floor: 'kanaali', floorD: 900 });
+  mkEl(M, 'swg', 'KJ', 500, 300, { id: 'SWG', w: r.swgLen, d: swgD, cells: r.cells.map(c => c.w), cellT: r.cells.map(c => c.t), term: 600 });
+  let ex = 300; eq.forEach(t => { mkEl(M, t, 'KJ', ex, kjH - EDEF[t].d, { rot: 2, id: 'EQ_' + t }); ex += EDEF[t].w + 200; });
+  mkEl(M, 'pe', 'KJ', kjW - 60, 600, { rot: 1, id: 'PE_KJ' });
+  mkEl(M, 'samm', 'KJ', ex, kjH - 150, { rot: 2, id: 'SAMM' });
+  mkOpen(M, KJ, 'ovi', 't', kjW - 1400, 1200, { label: d.key === 'caruna' ? 'ovi, iLOQ C-taso' : 'ovi, verkkoyhtiön pääsy 24/7' });
+  row.push(KJ); x += kjW + WALL;
+  const dw = Math.max(1400, tf.W + 400);
+  for (let i = 1; i <= nBay; i++) {
+    const res = i > r.n, W = Math.max(tf.L + 1000, dw + 2 * 600 + 400), H = tf.W + 500 + 800;
+    const R = mkRoom(M, 'T' + i, `Muuntajatila T${i}`, 'tf', x, 0, W, H, { topClear: 700 });
+    mkEl(M, res ? 'tfres' : 'tf', 'T' + i, snap((W - tf.L) / 2), 500, { id: 'TF' + i, idx: i, w: tf.L, d: tf.W, h: tf.H, oil, name: res ? 'Muuntajavaraus' : `Muuntaja T${i} ${r.unit} kVA ${oil ? 'öljy' : 'kuiva'}` });
+    mkOpen(M, R, 'iv_tulo', 't', 100, 600); mkOpen(M, R, 'ovi', 't', 800, dw, { label: 'haalausovi', h: tf.H + 300 }); mkOpen(M, R, 'iv_poisto', 't', W - 700, 600);
+    row.push(R); x += W + WALL;
+  }
+  const rowH = Math.max(...row.map(q => q.H)); row.forEach(q => q.H = rowH);
+  M.els.filter(e => e.room === 'KJ' && (e.id.startsWith('EQ_') || e.id === 'SAMM')).forEach(e => e.y = rowH - e.d);
+  const lvIn = r.lvIn, inc = lvIn <= 2500 ? 800 : lvIn <= 4000 ? 1000 : 1200, feeders = Math.max(2, Math.ceil(lvIn / 700)), cpl = r.n >= 2 ? 800 : 0;
+  const t1 = M.rooms.find(q => q.id === 'T1'), pjX = t1 ? t1.x : 0, pjY = rowH + WALL;
+  let cur = 800, boardsLen = 0; const bds = [];
+  for (let i = 1; i <= r.n; i++) {
+    const c = i < r.n ? cpl : 0, w = inc + feeders * 600 + 600 + (o.comp ? 800 : 0) + c; boardsLen += w;
+    const tfe = M.els.find(e => e.id === 'TF' + i), tR = M.rooms.find(q => q.id === 'T' + i);
+    const bx = snap(Math.max(cur, tR.x + tfe.x + tfe.w * .7 - pjX - inc / 2));
+    bds.push({ i, w, c, bx }); cur = bx + w;
+  }
+  const pjW = cur + 1100, pjH = 800 + o.pjFront + 400;
+  const PJ = mkRoom(M, 'PJ', 'PJ-pääkeskustila', 'pj', pjX, pjY, pjW, pjH);
+  bds.forEach(b => mkEl(M, 'board', 'PJ', b.bx, 0, { id: 'PJ' + b.i, idx: b.i, w: b.w, name: `PJ-pääkeskus ${b.i} (syöttö T${b.i})`, inc, cpl: b.c, comp: o.comp, clear: C4(0, 0, o.pjFront, 0) }));
+  mkEl(M, 'okrk', 'PJ', pjW - 250, 200, { rot: 1, id: 'OKRK' });
+  mkEl(M, 'pe', 'PJ', 0, 400, { rot: 3, id: 'PE_PJ' });
+  mkOpen(M, PJ, 'ovi', 'b', 300, 1000);
+  if (boardsLen > 10000) mkOpen(M, PJ, 'ovi', 'b', pjW - 1500, 1000, { label: '2. poistuminen' });
+  const cn = (kind, a, b, o2 = {}) => M.conns.push({ id: kind + (M.seq++), kind, a, b, wps: null, ...o2 });
+  for (let i = 1; i <= r.n; i++) cn('kisko', { el: 'TF' + i, p: 'lv' }, { el: 'PJ' + i, p: 'in' }, { lane: i - 1 });
+  const tfCells = r.cells.map((c, i) => i).filter(i => ['TVKE', 'TCB'].includes(r.cells[i].t));
+  const src = tfCells.length ? tfCells : [r.cells.findIndex(c => c.t === 'MEAS')];
+  src.forEach((ci, k) => { if (k < r.n) cn('kj', { el: 'SWG', p: 'c' + ci }, { el: 'TF' + (k + 1), p: 'hv' }, { lane: k }); });
+  for (let i = 1; i < r.n; i++) cn('yhdys', { el: 'PJ' + i, p: 'cr' }, { el: 'PJ' + (i + 1), p: 'cl' });
+  if (M.els.find(e => e.id === 'EQ_rtu')) cn('hylly', { el: 'EQ_rtu', p: 'c' }, { el: 'SWG', p: 'c0' });
+  if (M.els.find(e => e.id === 'KYTSWG')) cn('kyt', { el: 'KYTSWG', p: 'c' }, { el: 'SWG', p: 'c' + Math.max(0, r.cells.findIndex(c => c.t === 'CINC')) });
+  return M;
+}
+
+// ---------- geometria ----------
+const R_ = (M, id) => M.rooms.find(q => q.id === id);
+const fpWH = e => (e.rot % 2) ? { W: e.d, H: e.w } : { W: e.w, H: e.d };
+function gRect(M, e) { const R = R_(M, e.room) || { x: 0, y: 0 }, f = fpWH(e); return { x: R.x + e.x, y: R.y + e.y, w: f.W, h: f.H }; }
+function gEnv(M, e) { const g = gRect(M, e), c = ROT4(e.clear, e.rot); return { x: g.x - c.l, y: g.y - c.t, w: g.w + c.l + c.r, h: g.h + c.t + c.b }; }
+function toG(M, e, p) { const g = gRect(M, e), dx = p.x - e.w / 2, dy = p.y - e.d / 2; const [rx, ry] = [[dx, dy], [-dy, dx], [-dx, -dy], [dy, -dx]][e.rot % 4]; return { x: g.x + g.w / 2 + rx, y: g.y + g.h / 2 + ry }; }
+const ovl = (A, B) => A.x < B.x + B.w - 1 && B.x < A.x + A.w - 1 && A.y < B.y + B.h - 1 && B.y < A.y + A.h - 1;
+const isect = (A, B) => { const x = Math.max(A.x, B.x), y = Math.max(A.y, B.y); return { x, y, w: Math.min(A.x + A.w, B.x + B.w) - x, h: Math.min(A.y + A.h, B.y + B.h) - y }; };
+const inR = (p, R) => p.x > R.x && p.x < R.x + R.w && p.y > R.y && p.y < R.y + R.h;
+const roomRect = R => ({ x: R.x, y: R.y, w: R.W, h: R.H });
+const wallLen = (R, s) => (s === 't' || s === 'b') ? R.W : R.H;
+function portL(e, p) {
+  if (e.type === 'swg' && e.cells && /^c\d+$/.test(p)) { const k = Math.min(+p.slice(1), e.cells.length - 1); let x = 0; for (let i = 0; i < k; i++) x += e.cells[i]; return { x: x + e.cells[k] / 2, y: e.d / 2 }; }
+  if (e.type === 'tf' || e.type === 'tfres') return p === 'hv' ? { x: e.w * .25, y: e.d / 2 } : { x: e.w * .7, y: e.d / 2 };
+  if (e.type === 'board') return p === 'in' ? { x: (e.inc || 800) / 2, y: e.d / 2 } : p === 'cr' ? { x: e.w - Math.max(150, (e.cpl || 300) / 2), y: e.d / 2 } : { x: 150, y: e.d / 2 };
+  return { x: e.w / 2, y: e.d / 2 };
+}
+function connEnds(M, c) { const a = M.els.find(e => e.id === c.a.el), b = M.els.find(e => e.id === c.b.el); if (!a || !b) return null; return [toG(M, a, portL(a, c.a.p)), toG(M, b, portL(b, c.b.p))]; }
+function dedupe(o) { const r = []; o.forEach(p => { const l = r[r.length - 1]; if (l && Math.abs(l.x - p.x) < .5 && Math.abs(l.y - p.y) < .5) return; r.push({ x: p.x, y: p.y }); }); return r; }
+function clean(o) { const r = dedupe(o); for (let i = r.length - 2; i >= 1; i--) { const a = r[i - 1], b = r[i], c = r[i + 1]; if ((Math.abs(a.x - b.x) < .5 && Math.abs(b.x - c.x) < .5) || (Math.abs(a.y - b.y) < .5 && Math.abs(b.y - c.y) < .5)) r.splice(i, 1); } return r; }
+function orth(pts) { const o = [pts[0]]; for (let i = 1; i < pts.length; i++) { const p = o[o.length - 1], q = pts[i]; if (Math.abs(p.x - q.x) > .5 && Math.abs(p.y - q.y) > .5) o.push({ x: p.x, y: q.y }); o.push(q); } return dedupe(o); }
+function connPath(M, c) { const E = connEnds(M, c); if (!E) return null; const [A, B] = E; const ym = snap((A.y + B.y) / 2) + (c.lane || 0) * 150; return orth([A, ...(c.wps || [{ x: A.x, y: ym }, { x: B.x, y: ym }]), B]); }
+const pathLen = P => P.slice(1).reduce((a, p, i) => a + Math.abs(p.x - P[i].x) + Math.abs(p.y - P[i].y), 0);
+function opGeo(R, o) {
+  let P0, u, n; const s = o.side;
+  if (s === 't') { P0 = { x: R.x + o.off, y: R.y - WALL / 2 }; u = { x: 1, y: 0 }; n = { x: 0, y: -1 }; }
+  if (s === 'b') { P0 = { x: R.x + o.off, y: R.y + R.H + WALL / 2 }; u = { x: 1, y: 0 }; n = { x: 0, y: 1 }; }
+  if (s === 'l') { P0 = { x: R.x - WALL / 2, y: R.y + o.off }; u = { x: 0, y: 1 }; n = { x: -1, y: 0 }; }
+  if (s === 'r') { P0 = { x: R.x + R.W + WALL / 2, y: R.y + o.off }; u = { x: 0, y: 1 }; n = { x: 1, y: 0 }; }
+  return { P0, u, n, P1: { x: P0.x + u.x * o.w, y: P0.y + u.y * o.w } };
+}
+const shortN = e => e.type === 'tf' ? 'T' + (e.idx || '') : e.type === 'board' ? 'PJ' + (e.idx || '') : (EDEF[e.type] || {}).lab || e.id;
+function reqH(M, R) { const els = M.els.filter(e => e.room === R.id && e.type !== 'pe'); if (!els.length) return 0; return (R.floor === 'asennuslattia' ? R.floorD : 0) + Math.max(...els.map(e => e.h || 0)) + (R.topClear || 0); }
+
+// ---------- mallin operaatiot ----------
+function rotEl(M, e) { const f = fpWH(e); e.rot = (e.rot + 1) % 4; const n = fpWH(e); e.x = snap(e.x + f.W / 2 - n.W / 2); e.y = snap(e.y + f.H / 2 - n.H / 2); }
+function connsOfRoom(M, R) { const ids = M.els.filter(e => e.room === R.id).map(e => e.id); return M.conns.filter(c => ids.includes(c.a.el) || ids.includes(c.b.el)); }
+function rotRoom(M, R) {
+  const W = R.W, H = R.H, cx = R.x + W / 2, cy = R.y + H / 2;
+  M.els.filter(e => e.room === R.id).forEach(e => { const f = fpWH(e); const nx = H - (e.y + f.H), ny = e.x; e.rot = (e.rot + 1) % 4; e.x = nx; e.y = ny; });
+  R.open.forEach(o => { const m = { t: 'r', r: 'b', b: 'l', l: 't' }; if (o.side === 'r' || o.side === 'l') o.off = H - o.off - o.w; o.side = m[o.side]; });
+  R.W = H; R.H = W;
+  connsOfRoom(M, R).forEach(c => c.wps = null);
+  nudgeFree(M, R);
+}
+function mirRoom(M, R) {
+  M.els.filter(e => e.room === R.id).forEach(e => { const f = fpWH(e); e.x = R.W - e.x - f.W; if (e.rot % 2) e.rot = (e.rot + 2) % 4; });
+  R.open.forEach(o => { if (o.side === 'l') o.side = 'r'; else if (o.side === 'r') o.side = 'l'; else o.off = R.W - o.off - o.w; o.hinge = o.hinge === 'v' ? 'o' : 'v'; });
+  connsOfRoom(M, R).forEach(c => c.wps = null);
+}
+function fitRoom(M, R) {
+  const els = M.els.filter(e => e.room === R.id); if (!els.length) return;
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  els.forEach(e => { const g = gEnv(M, e); x0 = Math.min(x0, g.x - R.x); y0 = Math.min(y0, g.y - R.y); x1 = Math.max(x1, g.x + g.w - R.x); y1 = Math.max(y1, g.y + g.h - R.y); });
+  x0 = snap(x0); y0 = snap(y0);
+  shiftRoomOrigin(R, els, x0, y0);
+  R.W = Math.max(1000, snap(x1 - x0), ...R.open.filter(o => o.side === 't' || o.side === 'b').map(o => o.off + o.w + 100));
+  R.H = Math.max(1000, snap(y1 - y0), ...R.open.filter(o => o.side === 'l' || o.side === 'r').map(o => o.off + o.w + 100));
+}
+function shiftRoomOrigin(R, els, dx, dy) { R.x += dx; R.y += dy; els.forEach(e => { e.x -= dx; e.y -= dy; }); R.open.forEach(o => { if (o.side === 't' || o.side === 'b') o.off -= dx; else o.off -= dy; }); }
+function freeSpot(M, R, e) {
+  const f = fpWH(e), others = M.els.filter(z => z.room === R.id && z !== e);
+  for (let y = 0; y + f.H <= R.H; y += 100) for (let x = 0; x + f.W <= R.W; x += 100) {
+    e.x = x; e.y = y; const g = gRect(M, e), en = gEnv(M, e);
+    if (en.x < R.x - 1 || en.y < R.y - 1 || en.x + en.w > R.x + R.W + 1 || en.y + en.h > R.y + R.H + 1) continue;
+    if (!others.some(o => ovl(g, gEnv(M, o)) || ovl(gRect(M, o), en))) return true;
+  }
+  // ei vapaata paikkaa → laajenna tilaa oikealle ja sijoita laite laajennukseen
+  const c = ROT4(e.clear, e.rot), need = Math.max(f.H + c.t + c.b, 0);
+  e.x = R.W + c.l; e.y = Math.max(0, Math.min(c.t, R.H - f.H));
+  R.W = snap(R.W + c.l + f.W + c.r + 100); if (need > R.H) R.H = snap(need);
+  return false;
+}
+function moveRoomConns(M, R, rect0, dx, dy, orig) {
+  const zone = { x: rect0.x - 1500, y: rect0.y - 1500, w: rect0.w + 3000, h: rect0.h + 3000 };
+  connsOfRoom(M, R).forEach(c => { const o = orig ? orig[c.id] : c.wps; if (!o) return; c.wps = o.map(p => inR(p, zone) ? { x: p.x + dx, y: p.y + dy } : { ...p }); });
+}
+function setRoomPos(M, R, x, y) { const r0 = roomRect(R), dx = x - R.x, dy = y - R.y; if (!dx && !dy) return; R.x = x; R.y = y; moveRoomConns(M, R, r0, dx, dy); }
+function nudgeFree(M, R, depth = 0) {
+  if (depth > 12) return;
+  const hit = () => M.rooms.find(q => q !== R && ovl({ x: R.x - WALL / 2, y: R.y - WALL / 2, w: R.W + WALL, h: R.H + WALL }, { x: q.x - WALL / 2, y: q.y - WALL / 2, w: q.W + WALL, h: q.H + WALL }) && isect({ x: R.x - WALL / 2, y: R.y - WALL / 2, w: R.W + WALL, h: R.H + WALL }, { x: q.x - WALL / 2, y: q.y - WALL / 2, w: q.W + WALL, h: q.H + WALL }).w > 1 && isect({ x: R.x - WALL / 2, y: R.y - WALL / 2, w: R.W + WALL, h: R.H + WALL }, { x: q.x - WALL / 2, y: q.y - WALL / 2, w: q.W + WALL, h: q.H + WALL }).h > 1);
+  // siirrä oikealla olevia naapureita (rivissä) eteenpäin, jotta tila mahtuu
+  for (let i = 0; i < 30; i++) { const q = hit(); if (!q) return; if (q.x >= R.x) { setRoomPos(M, q, R.x + R.W + WALL, q.y); nudgeFree(M, q, depth + 1); } else setRoomPos(M, R, q.x + q.W + WALL, R.y); }
+}
+function wallSnap(M, e) {
+  const R = R_(M, e.room); if (!R) return; const f = fpWH(e), c = ROT4(e.clear, e.rot), T = 250;
+  if (c.l === 0 && Math.abs(e.x) < T) e.x = 0; if (c.r === 0 && Math.abs(R.W - e.x - f.W) < T) e.x = R.W - f.W;
+  if (c.t === 0 && Math.abs(e.y) < T) e.y = 0; if (c.b === 0 && Math.abs(R.H - e.y - f.H) < T) e.y = R.H - f.H;
+}
+function snapRoom(M, R, nx, ny) {
+  let bx = nx, by = ny, dx = 300, dy = 300;
+  M.rooms.filter(q => q !== R).forEach(q => {
+    [q.x + q.W + WALL, q.x - R.W - WALL, q.x, q.x + q.W - R.W].forEach(c => { if (Math.abs(c - nx) < dx) { dx = Math.abs(c - nx); bx = c; } });
+    [q.y + q.H + WALL, q.y - R.H - WALL, q.y, q.y + q.H - R.H].forEach(c => { if (Math.abs(c - ny) < dy) { dy = Math.abs(c - ny); by = c; } });
+  });
+  return [bx, by];
+}
+
+// ---------- tarkistukset ----------
+function validate(r, M) {
+  const msg = [], marks = []; const add = (t, m) => { if (!msg.includes(t)) msg.push(t); if (m && m.w > 0 && m.h > 0) marks.push(m); };
+  M.rooms.forEach(R => {
+    const els = M.els.filter(e => e.room === R.id), RR = roomRect(R);
+    els.forEach(e => {
+      const g = gRect(M, e), en = gEnv(M, e);
+      if (g.x < R.x - 1 || g.y < R.y - 1 || g.x + g.w > R.x + R.W + 1 || g.y + g.h > R.y + R.H + 1) add(`${R.name}: ${e.name} ulottuu seinän läpi`, g);
+      else if (en.x < R.x - 1 || en.y < R.y - 1 || en.x + en.w > R.x + R.W + 1 || en.y + en.h > R.y + R.H + 1) add(`${R.name}: ${e.name} – huolto-/hoitoväli ei mahdu tilaan`);
+    });
+    for (let a = 0; a < els.length; a++) for (let b = 0; b < els.length; b++) {
+      if (a === b) continue; const ga = gRect(M, els[a]), eb = gEnv(M, els[b]);
+      if (ovl(ga, eb)) add(`${R.name}: ${els[a].name} on laitteen ${els[b].name} ${ovl(ga, gRect(M, els[b])) ? 'päällä' : 'huoltovälissä'}`, isect(ga, eb));
+    }
+    R.open.forEach(o => {
+      if (o.off < -1 || o.off + o.w > wallLen(R, o.side) + 1) add(`${R.name}: ${o.label} ei mahdu seinälle`);
+      const G = opGeo(R, o), mid = { x: G.P0.x + G.u.x * o.w / 2 + G.n.x * (WALL / 2 + 250), y: G.P0.y + G.u.y * o.w / 2 + G.n.y * (WALL / 2 + 250) };
+      const other = M.rooms.find(q => q !== R && inR(mid, { x: q.x - WALL, y: q.y - WALL, w: q.W + 2 * WALL, h: q.H + 2 * WALL }));
+      if (other && o.type !== 'lapivienti') add(`${R.name}: ${o.label} johtaa tilaan ${other.name} – ${o.type === 'ovi' ? 'siirrä ulkoseinälle tai tarkista kulkureitti' : 'IV-säleikkö kuuluu ulkoseinälle'}`);
+      if (o.type === 'ovi' && o.dir === 'sisaan') {
+        const lw = o.dbl ? o.w / 2 : o.w, fi = { x: G.P0.x - G.n.x * WALL / 2, y: G.P0.y - G.n.y * WALL / 2 }, ex = G.u.x * o.w - G.n.x * lw, ey = G.u.y * o.w - G.n.y * lw;
+        const sw = { x: Math.min(fi.x, fi.x + ex), y: Math.min(fi.y, fi.y + ey), w: Math.abs(ex), h: Math.abs(ey) };
+        els.forEach(e => { if (ovl(sw, gRect(M, e))) add(`${R.name}: ${o.label} avautuu laitteen ${e.name} päälle`, isect(sw, gRect(M, e))); });
+      }
+    });
+    const tfs = els.filter(e => e.type === 'tf');
+    if (tfs.length) {
+      if (!R.open.some(o => o.type === 'iv_tulo') || !R.open.some(o => o.type === 'iv_poisto')) add(`${R.name}: IV tulo- tai poistosäleikkö puuttuu`);
+      const need = Math.min(...tfs.map(e => Math.min(e.w, e.d))) + 200, mx = Math.max(0, ...R.open.filter(o => o.type === 'ovi').map(o => o.w));
+      if (mx < need) add(`${R.name}: haalausovi ${mx} mm < muuntajan kapein mitta + 200 mm = ${need} mm`);
+    }
+    const rq = reqH(M, R); if (R.ceil && rq && R.ceil < rq) add(`${R.name}: huonekorkeus ${f0(R.ceil)} mm < vaadittu ${f0(rq)} mm`);
+    if (R.floor === 'asennuslattia' && R.open.some(o => o.type === 'ovi')) add(`${R.name}: asennuslattia ${R.floorD} mm – huomioi oven kynnys/luiska ja haalausreitti lattiatasolle`);
+  });
+  if (r.d.key === 'ves') {
+    const sw = M.els.find(e => e.type === 'swg');
+    if (sw) { const R = R_(M, sw.room), t = (sw.term || 600);
+      if (R.floor === 'ei') add('VES: kaapelikenkien kiinnitys ~1500 mm kanaalin/asennuslattian pohjasta – lisää KJ-tilaan kanaali tai asennuslattia, tai kojeisto sokkelille');
+      else if (R.floorD + t < 1500) add(`VES: ${R.floor} ${R.floorD} mm + kaapelipäätteen korkeus ${t} mm = ${R.floorD + t} mm < 1500 mm – syvennä tai nosta kojeisto sokkelille`); }
+  }
+  for (let a = 0; a < M.rooms.length; a++) for (let b = a + 1; b < M.rooms.length; b++) {
+    const A = roomRect(M.rooms[a]), B = roomRect(M.rooms[b]), Aw = { x: A.x - WALL / 2, y: A.y - WALL / 2, w: A.w + WALL, h: A.h + WALL }, Bw = { x: B.x - WALL / 2, y: B.y - WALL / 2, w: B.w + WALL, h: B.h + WALL };
+    if (ovl(Aw, Bw) && !(Math.abs(isect(Aw, Bw).w) <= 1 || Math.abs(isect(Aw, Bw).h) <= 1)) add(`${M.rooms[a].name} ja ${M.rooms[b].name} menevät päällekkäin`, isect(A, B).w > 0 && isect(A, B).h > 0 ? isect(A, B) : null);
+  }
+  M.conns.filter(c => c.kind === 'kisko').forEach(c => {
+    const P = connPath(M, c); if (!P) return; const a = M.els.find(e => e.id === c.a.el), b = M.els.find(e => e.id === c.b.el);
+    M.els.filter(e => ['tf', 'board', 'swg', 'tfres'].includes(e.type) && e !== a && e !== b).forEach(e => {
+      const g = gRect(M, e);
+      for (let s = 0; s < P.length - 1; s++) { const p = P[s], q = P[s + 1], seg = { x: Math.min(p.x, q.x) - 1, y: Math.min(p.y, q.y) - 1, w: Math.abs(p.x - q.x) + 2, h: Math.abs(p.y - q.y) + 2 };
+        if (ovl(seg, g)) { add(`Kiskosilta ${shortN(a)}→${shortN(b)} kulkee laitteen ${e.name} yli – muokkaa reittiä`, isect(seg, g)); break; } }
+    });
+  });
+  return { msg, marks };
+}
+
+// ---------- piirto ----------
+function viewOf(M, deco) {
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; const inc = (x, y) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); };
+  M.rooms.forEach(R => { inc(R.x - WALL - 300, R.y - WALL - 300); inc(R.x + R.W + WALL + 300, R.y + R.H + WALL + 300);
+    R.open.forEach(o => { const G = opGeo(R, o), lw = o.type === 'ovi' ? (o.dbl ? o.w / 2 : o.w) : 0; inc(G.P0.x + G.n.x * (lw + 700), G.P0.y + G.n.y * (lw + 700)); }); });
+  (deco || []).forEach(p => inc(p.x, p.y));
+  if (!M.rooms.length) { x0 = 0; y0 = 0; x1 = 5000; y1 = 5000; }
+  const scale = Math.min(0.09, 1120 / (x1 - x0));
+  return { scale, ox: x0, oy: y0, px: 20, py: 64, W: 40 + (x1 - x0) * scale, H: 64 + (y1 - y0) * scale + 30, x1, y1 };
+}
+function decoPts(r, M) {
+  const out = [], sw = M.els.find(e => e.type === 'swg'); if (!sw || !sw.cellT) return { lines: [], box: null, pts: out };
+  const R = R_(M, sw.room), inc = sw.cellT.map((t, i) => i).filter(i => sw.cellT[i] === 'INC' || sw.cellT[i] === 'CINC');
+  const lines = []; let box = null;
+  if (M.els.some(e => e.type === 'kyt')) return { lines, box, pts: out };
+  inc.forEach(ci => {
+    const p = toG(M, sw, portL(sw, 'c' + ci));
+    if (r.d.key === 'caruna') { const minX = Math.min(...M.rooms.map(q => q.x)) - WALL - 2600; box = { x: minX, y: p.y - 550, w: 1800, h: 1100 }; lines.push(orth([{ x: minX + 1800, y: p.y }, p])); out.push({ x: minX - 200, y: p.y - 700 }, { x: minX, y: p.y + 700 }); }
+    else { const s = ['t', 'r', 'b', 'l'][sw.rot % 4];
+      const q = s === 't' ? { x: p.x, y: R.y - WALL - 1300 } : s === 'b' ? { x: p.x, y: R.y + R.H + WALL + 1300 } : s === 'l' ? { x: R.x - WALL - 1300, y: p.y } : { x: R.x + R.W + WALL + 1300, y: p.y };
+      lines.push([q, p]); out.push(q); }
+  });
+  return { lines, box, pts: out };
+}
+function renderLayout(r, M, V, opt = {}) {
+  const sc = V.scale, X = v => +(V.px + (v - V.ox) * sc).toFixed(1), Y = v => +(V.py + (v - V.oy) * sc).toFixed(1), Sc = v => +(v * sc).toFixed(2);
+  const tx = (x, y, t, o = {}) => `<text x="${x}" y="${y}" font-size="${o.s || 10}" text-anchor="${o.a || 'middle'}" fill="${o.c || '#1d2733'}" ${o.w ? 'font-weight="600"' : ''} paint-order="stroke" stroke="#fff" stroke-width="3" pointer-events="none">${t}</text>`;
+  const poly = (P, st) => `<polyline points="${P.map(p => `${X(p.x)},${Y(p.y)}`).join(' ')}" fill="none" ${st} pointer-events="none"/>`;
+  const sel = opt.sel || {}, exp = !!opt.exportMode;
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${V.W}" height="${V.H}" viewBox="0 0 ${V.W} ${V.H}" style="background:#fff">`;
+  s += `<defs><pattern id="hatchAL" patternUnits="userSpaceOnUse" width="7" height="7"><path d="M0 7 L7 0" stroke="#c9a96b" stroke-width=".7"/></pattern></defs>`;
+  const area = M.rooms.reduce((a, q) => a + q.W * q.H / 1e6, 0);
+  s += tx(14, 20, `${r.inp.proj || ''} – Muuntamon tilalayout · ${r.d.name} · ${r.n}×${r.unit} kVA`, { a: 'start', s: 13, w: 1 });
+  s += tx(14, 36, `Mitat mm · ohjeellinen tilavaraus – ei toteutuskuva · tilat yhteensä ~${f1(area)} m² (sisämitat)`, { a: 'start', s: 10.5, c: '#5b6b7c' });
+  M.rooms.forEach(R => { s += `<rect x="${X(R.x - WALL / 2)}" y="${Y(R.y - WALL / 2)}" width="${Sc(R.W + WALL)}" height="${Sc(R.H + WALL)}" fill="#9aa7b4"/>`; });
+  M.rooms.forEach(R => {
+    s += `<rect data-k="room" data-id="${R.id}" x="${X(R.x)}" y="${Y(R.y)}" width="${Sc(R.W)}" height="${Sc(R.H)}" fill="${R.kind === 'kyt' ? '#f6fbf1' : '#fff'}" style="cursor:grab"><title>${R.name} – raahaa siirtääksesi, valitse muokataksesi</title></rect>`;
+    if (R.floor === 'asennuslattia') s += `<rect x="${X(R.x)}" y="${Y(R.y)}" width="${Sc(R.W)}" height="${Sc(R.H)}" fill="url(#hatchAL)" pointer-events="none"/>`;
+    if (R.floor === 'kanaali') M.els.filter(e => e.room === R.id && ['swg', 'board', 'kyt'].includes(e.type)).forEach(e => { const g = gRect(M, e); s += `<rect x="${X(g.x - 100)}" y="${Y(g.y - 100)}" width="${Sc(g.w + 200)}" height="${Sc(g.h + 200)}" fill="#e8f1fb" stroke="#0b5cab" stroke-dasharray="5 4" stroke-width=".8" pointer-events="none"/>`; });
+  });
+  // laitteet
+  M.els.forEach(e => {
+    const R = R_(M, e.room); if (!R) return; const g = gRect(M, e), k = e.rot % 4, w = Sc(e.w), h = Sc(e.d);
+    const lt = (x, y, t, o = {}) => `<text x="${x}" y="${y}" font-size="${o.s || 8.5}" text-anchor="middle" dominant-baseline="middle" fill="${o.c || '#1d2733'}" ${o.w ? 'font-weight="600"' : ''} transform="rotate(${-90 * k} ${x} ${y})" paint-order="stroke" stroke="#fff" stroke-width="2.5">${t}</text>`;
+    const rc = (x, y, ww, hh, st) => `<rect x="${x}" y="${y}" width="${ww}" height="${hh}" ${st}/>`;
+    const cl = e.clear, D = EDEF[e.type] || {};
+    let c = (cl.t + cl.r + cl.b + cl.l) ? rc(-Sc(cl.l), -Sc(cl.t), w + Sc(cl.l + cl.r), h + Sc(cl.t + cl.b), `fill="#eaf6ea" fill-opacity="${e.type === 'tf' ? .3 : .5}" stroke="#1e8e3e" stroke-dasharray="3 3" stroke-width=".6" pointer-events="none"`) : '';
+    if (e.type === 'swg') {
+      let xx = 0; (e.cells || [e.w]).forEach((cw, i) => { const t = (e.cellT || [])[i] || ''; const col = t === 'INC' || t === 'CINC' ? '#dfe9f5' : t === 'SPARE' ? '#f4f4f4' : t === 'MEAS' ? '#fff3d6' : t.startsWith('M') ? '#fde3e1' : '#e9eef3';
+        c += rc(Sc(xx), 0, Sc(cw), h, `fill="${col}" stroke="#1d2733" stroke-width="1" ${t === 'SPARE' ? 'stroke-dasharray="4 3"' : ''}`) + lt(Sc(xx + cw / 2), h / 2, `AH${String(i + 1).padStart(2, '0')}`, { s: 6.5 }); xx += cw; });
+      c += lt(w / 2, -Sc(170), `KJ-kojeisto ${f0(e.w)}`, { s: 8.5, w: 1 }) + lt(w / 2, h + Sc(750), 'hoitokäytävä ≥ ' + f0(cl.b), { s: 7.5, c: '#1e8e3e' });
+    } else if (e.type === 'tf' || e.type === 'tfres') {
+      if (e.type === 'tfres') c += rc(0, 0, w, h, 'fill="#fff" fill-opacity=".6" stroke="#9aa7b4" stroke-dasharray="6 4"') + lt(w / 2, h / 2, 'Varaus', { s: 9, c: '#5b6b7c' });
+      else { if (e.oil) c += rc(-Sc(100), -Sc(100), w + Sc(200), h + Sc(200), 'fill="none" stroke="#b26a00" stroke-dasharray="4 2"');
+        c += rc(0, 0, w, h, 'fill="#e3ecf6" stroke="#1d2733" stroke-width="1.3"'); for (let q = 0; q < 3; q++) c += `<circle cx="${w * (q + 1) / 4}" cy="${h / 2}" r="${Sc(e.d * .28)}" fill="none" stroke="#1d2733" stroke-width=".9"/>`;
+        c += lt(w / 2, h + Sc(250), `${shortN(e)} ${r.unit} kVA`, { s: 9, w: 1 }) + lt(w / 2, h + Sc(520), `${e.w}×${e.d}×${e.h}`, { s: 7.5, c: '#5b6b7c' }); }
+    } else if (e.type === 'board') {
+      const inc = e.inc || 800; c += rc(0, 0, w, h, 'fill="#efe6fa" stroke="#1d2733" stroke-width="1.1"') + rc(0, 0, Sc(inc), h, 'fill="#d9c8f2" stroke="#1d2733" stroke-width=".8"') + lt(Sc(inc / 2), h / 2, `tulo`, { s: 6.5, c: '#7a3db8', w: 1 });
+      let rx = e.w; if (e.cpl) { rx -= e.cpl; c += rc(Sc(rx), 0, Sc(e.cpl), h, 'fill="#fde3e1" stroke="#1d2733" stroke-width=".8"') + lt(Sc(rx + e.cpl / 2), h / 2, 'yhd.', { s: 6.5 }); }
+      if (e.comp) { rx -= 800; c += rc(Sc(rx), 0, Sc(800), h, 'fill="#fff0c2" stroke="#1d2733" stroke-width=".8"') + lt(Sc(rx + 400), h / 2, 'komp.', { s: 6.5 }); }
+      c += lt(Sc((inc + rx) / 2), h / 2, shortN(e), { s: 8, w: 1 }) + lt(w / 2, h + Sc(cl.b / 2), `hoitotila ≥ ${f0(cl.b)}`, { s: 7, c: '#1e8e3e' });
+    } else if (e.type === 'pe') c += rc(0, 0, w, Math.max(h, 2.5), 'fill="#1e8e3e"') + lt(w / 2, h + 7, 'PE', { s: 7, c: '#1e8e3e' });
+    else c += rc(0, 0, w, h, `fill="${D.fill || '#e9eef3'}" stroke="#1d2733" stroke-width=".9"`) + lt(w / 2, h / 2, D.lab || e.type, { s: 7, w: 1 });
+    if (sel.t === 'el' && sel.id === e.id && !exp) c += rc(-3, -3, w + 6, h + 6, 'fill="none" stroke="#0b5cab" stroke-width="2" stroke-dasharray="4 2"');
+    const tr = `translate(${(X(g.x) + Sc(g.w) / 2).toFixed(1)} ${(Y(g.y) + Sc(g.h) / 2).toFixed(1)}) rotate(${90 * k}) translate(${(-w / 2).toFixed(1)} ${(-h / 2).toFixed(1)})`;
+    s += `<g data-k="el" data-id="${e.id}" transform="${tr}" style="cursor:move"><title>${e.name} – raahaa (myös toiseen tilaan), tuplaklikkaus kiertää</title>${c}</g>`;
+  });
+  // aukot
+  M.rooms.forEach(R => R.open.forEach(o => {
+    const G = opGeo(R, o), selD = sel.t === 'op' && sel.id === o.id;
+    const ax = Math.min(G.P0.x, G.P1.x) - Math.abs(G.n.x) * 110, ay = Math.min(G.P0.y, G.P1.y) - Math.abs(G.n.y) * 110, aw = Math.abs(G.P1.x - G.P0.x) + Math.abs(G.n.x) * 220, ah = Math.abs(G.P1.y - G.P0.y) + Math.abs(G.n.y) * 220;
+    let g = '';
+    if (o.type === 'ovi') {
+      const out = o.dir === 'sisaan' ? { x: -G.n.x, y: -G.n.y } : G.n, col = '#b0302a';
+      const base = o.dir === 'sisaan' ? { x: -G.n.x * WALL / 2, y: -G.n.y * WALL / 2 } : { x: G.n.x * WALL / 2, y: G.n.y * WALL / 2 };
+      const P0 = { x: G.P0.x + base.x, y: G.P0.y + base.y }, P1 = { x: G.P1.x + base.x, y: G.P1.y + base.y }, Mid = { x: (P0.x + P1.x) / 2, y: (P0.y + P1.y) / 2 };
+      const leaves = o.dbl ? [[P0, Mid, o.w / 2], [P1, Mid, o.w / 2]] : (o.hinge === 'o' ? [[P1, P0, o.w]] : [[P0, P1, o.w]]);
+      g += `<rect x="${X(ax)}" y="${Y(ay)}" width="${Sc(aw)}" height="${Sc(ah)}" fill="#fff"/>`;
+      leaves.forEach(([h, c, lw]) => { const L = { x: h.x + out.x * lw, y: h.y + out.y * lw }; const cr = (L.x - h.x) * (c.y - h.y) - (L.y - h.y) * (c.x - h.x);
+        g += `<path d="M${X(L.x)} ${Y(L.y)} A${Sc(lw)} ${Sc(lw)} 0 0 ${cr > 0 ? 1 : 0} ${X(c.x)} ${Y(c.y)}" fill="none" stroke="${col}" stroke-width="1" stroke-dasharray="3 2"/><line x1="${X(h.x)}" y1="${Y(h.y)}" x2="${X(L.x)}" y2="${Y(L.y)}" stroke="${col}" stroke-width="2"/>`;
+        g += `<line x1="${X(h.x)}" y1="${Y(h.y)}" x2="${X(L.x)}" y2="${Y(L.y)}" stroke="#000" stroke-opacity="0" stroke-width="9"/>`; });
+    } else if (o.type === 'lapivienti') {
+      g += `<rect x="${X(ax)}" y="${Y(ay)}" width="${Sc(aw)}" height="${Sc(ah)}" fill="#fff" stroke="#5b6b7c" stroke-width=".8"/><line x1="${X(ax)}" y1="${Y(ay)}" x2="${X(ax + aw)}" y2="${Y(ay + ah)}" stroke="#5b6b7c" stroke-width=".8"/><line x1="${X(ax + aw)}" y1="${Y(ay)}" x2="${X(ax)}" y2="${Y(ay + ah)}" stroke="#5b6b7c" stroke-width=".8"/>`;
+    } else { const t = o.type === 'iv_tulo'; g += `<rect x="${X(ax)}" y="${Y(ay)}" width="${Sc(aw)}" height="${Sc(ah)}" fill="${t ? '#cfe8f7' : '#f7d9cf'}" stroke="${t ? '#0b5cab' : '#c5221f'}" stroke-width=".9"/>`; }
+    if (selD && !exp) g += `<rect x="${X(ax) - 3}" y="${Y(ay) - 3}" width="${Sc(aw) + 6}" height="${Sc(ah) + 6}" fill="none" stroke="#0b5cab" stroke-width="2"/>`;
+    const lw = o.type === 'ovi' ? (o.dbl ? o.w / 2 : o.w) : 0, ld = o.type === 'ovi' && o.dir !== 'sisaan' ? lw + 300 : 350;
+    const lp = { x: G.P0.x + G.u.x * o.w / 2 + G.n.x * ld, y: G.P0.y + G.u.y * o.w / 2 + G.n.y * ld };
+    s += `<g data-k="op" data-id="${o.id}" data-r="${R.id}" style="cursor:pointer"><title>${o.label} – raahaa seinää pitkin, valitse muokataksesi</title>${g}</g>` + tx(X(lp.x), Y(lp.y) + 3, `${o.label} ${o.dbl ? '2×' + f0(o.w / 2) : f0(o.w)}`, { s: 8, c: o.type === 'iv_tulo' ? '#0b5cab' : '#b0302a' });
+  }));
+  // ulkoiset syötöt
+  const dc = decoPts(r, M);
+  if (dc.box) s += `<rect x="${X(dc.box.x)}" y="${Y(dc.box.y)}" width="${Sc(dc.box.w)}" height="${Sc(dc.box.h)}" fill="#f6fbf1" stroke="#5aa02c" stroke-dasharray="5 3"/>` + tx(X(dc.box.x + 900), Y(dc.box.y + 480), 'Carunan kytkemö', { s: 8.5, c: '#3a7d1a', w: 1 }) + tx(X(dc.box.x + 900), Y(dc.box.y + 780), '(ulkona)', { s: 8, c: '#3a7d1a' });
+  dc.lines.forEach((P, i) => { s += poly(P, `stroke="${r.d.key === 'caruna' ? '#3a7d1a' : '#0b5cab'}" stroke-width="1.4" stroke-dasharray="6 3"`); if (!i && r.d.key !== 'caruna') s += tx(X(P[0].x) + 5, Y(P[0].y) + 10, `${r.d.short} verkkokaapelit`, { s: 8, a: 'start', c: '#0b5cab' }); });
+  // liitännät
+  const CST = { kisko: c => `stroke="#7a3db8" stroke-width="${Math.max(3, Sc(250))}" stroke-linejoin="round" stroke-opacity=".85"`, kj: () => 'stroke="#c5221f" stroke-width="1.2" stroke-dasharray="7 3"', yhdys: () => 'stroke="#c5221f" stroke-width="1.6" stroke-dasharray="5 3"', hylly: () => 'stroke="#b26a00" stroke-width="1.3" stroke-dasharray="2 2"', kyt: () => 'stroke="#3a7d1a" stroke-width="1.4" stroke-dasharray="6 3"' };
+  M.conns.forEach(c => {
+    const P = connPath(M, c); if (!P) return; const isSel = sel.t === 'conn' && sel.id === c.id;
+    if (isSel && !exp) s += poly(P, 'stroke="#0b5cab" stroke-width="' + (Math.max(3, Sc(250)) + 5) + '" stroke-opacity=".35" stroke-linejoin="round"');
+    s += poly(P, CST[c.kind](c));
+    const a = M.els.find(e => e.id === c.a.el), b = M.els.find(e => e.id === c.b.el);
+    if (c.kind === 'kisko') { const m = P[Math.floor((P.length - 1) / 2)], n2 = P[Math.floor((P.length - 1) / 2) + 1] || m; s += tx((X(m.x) + X(n2.x)) / 2 + 4, (Y(m.y) + Y(n2.y)) / 2 - 5, `KS ${shortN(a)}→${shortN(b)} ~${f1(pathLen(P) / 1000)} m`, { s: 7.5, c: '#7a3db8', a: 'start' }); }
+    if (c.kind === 'yhdys') { const m = P[0], n2 = P[1] || m; s += tx((X(m.x) + X(n2.x)) / 2, (Y(m.y) + Y(n2.y)) / 2 - 5, 'yhdys (aukiohjattu)', { s: 7, c: '#c5221f' }); }
+    if (!exp) for (let i = 0; i < P.length - 1; i++) s += `<line data-k="cseg" data-c="${c.id}" data-s="${i}" x1="${X(P[i].x)}" y1="${Y(P[i].y)}" x2="${X(P[i + 1].x)}" y2="${Y(P[i + 1].y)}" stroke="#000" stroke-opacity="0" stroke-width="10" style="cursor:${Math.abs(P[i].y - P[i + 1].y) < .5 ? 'ns-resize' : 'ew-resize'}"><title>Raahaa osuutta · tuplaklikkaus lisää taitepisteen</title></line>`;
+    if (isSel && !exp) for (let i = 1; i < P.length - 1; i++) s += `<circle data-k="cpt" data-c="${c.id}" data-i="${i}" cx="${X(P[i].x)}" cy="${Y(P[i].y)}" r="5.5" fill="#fff" stroke="#0b5cab" stroke-width="2" style="cursor:move"><title>Raahaa taitepistettä · tuplaklikkaus poistaa</title></circle>`;
+  });
+  // tilojen tekstit
+  M.rooms.forEach(R => { const rq = reqH(M, R), fl = R.floor === 'asennuslattia' ? ` · AL ${f0(R.floorD)}` : R.floor === 'kanaali' ? ` · kanaali ${f0(R.floorD)}` : '';
+    s += tx(X(R.x + 120), Y(R.y) + 11, R.name, { a: 'start', s: 8.5, w: 1 }) + tx(X(R.x + 120), Y(R.y) + 22, `${f1(R.W / 1000)} × ${f1(R.H / 1000)} m = ${f1(R.W * R.H / 1e6)} m²`, { a: 'start', s: 7.5, c: '#5b6b7c' }) + (rq ? tx(X(R.x + 120), Y(R.y) + 32, `h ≥ ${f0(rq)}${fl}`, { a: 'start', s: 7.5, c: R.ceil && R.ceil < rq ? '#c5221f' : '#5b6b7c' }) : ''); });
+  (opt.marks || []).forEach(m => s += `<rect x="${X(m.x)}" y="${Y(m.y)}" width="${Sc(m.w)}" height="${Sc(m.h)}" fill="#c5221f" fill-opacity=".35" pointer-events="none"/>`);
+  // valinta: tilan kahvat ja mitat
+  if (sel.t === 'room' && !exp) { const R = R_(M, sel.id); if (R) {
+    const x0 = X(R.x), y0 = Y(R.y), x1 = X(R.x + R.W), y1 = Y(R.y + R.H), xm = (x0 + x1) / 2, ym = (y0 + y1) / 2;
+    s += `<rect x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" fill="none" stroke="#0b5cab" stroke-width="2" stroke-dasharray="6 3" pointer-events="none"/>`;
+    s += tx(xm, y0 - 14, `${f0(R.W)}`, { s: 10, c: '#0b5cab', w: 1 }) + tx(x0 - 16, ym, `${f0(R.H)}`, { s: 10, c: '#0b5cab', w: 1 });
+    [['nw', x0, y0, 'nwse'], ['n', xm, y0, 'ns'], ['ne', x1, y0, 'nesw'], ['e', x1, ym, 'ew'], ['se', x1, y1, 'nwse'], ['s', xm, y1, 'ns'], ['sw', x0, y1, 'nesw'], ['w', x0, ym, 'ew']].forEach(([d, x, y, cu]) => s += `<rect data-k="rh" data-d="${d}" x="${x - 5}" y="${y - 5}" width="10" height="10" fill="#fff" stroke="#0b5cab" stroke-width="2" style="cursor:${cu}-resize"/>`);
+  } }
+  const lg = [['#dfe9f5', 'Liittymiskenno'], ['#fde3e1', 'Katkaisija/yhdys'], ['#fff3d6', 'Mittauskenno'], ['#fff0c2', 'Verkkoyhtiön laite'], ['#efe6fa', 'PJ-pääkeskus'], ['#eaf6ea', 'Hoito-/huoltoväli'], ['url(#hatchAL)', 'Asennuslattia'], ['#e8f1fb', 'Kaapelikanaali']];
+  lg.forEach((l, i) => { s += `<rect x="${14 + i * 118}" y="${V.H - 16}" width="12" height="10" fill="${l[0]}" stroke="#1d2733" stroke-width=".6"/>` + tx(30 + i * 118, V.H - 7, l[1], { s: 8.5, a: 'start' }); });
+  return s + '</svg>';
+}
+
+const $ = id => document.getElementById(id);
+let LAST = null;
+function readInp() {
+  const g = id => $(id).type === 'checkbox' ? $(id).checked : ($(id).tagName === 'SELECT' ? $(id).value : +$(id).value);
+  return { dso: g('dso'), U: +g('U'), kW: g('kW'), pf: g('pf'), growth: g('growth'), prodKVA: g('prodKVA'), redund: g('redund'), nTf: g('nTf'), maxUnit: g('maxUnit'),
+    loadPct: g('loadPct'), emergPct: g('emergPct'), uk: g('uk'), reserveTf: g('reserveTf'), subN: g('subN'), spare: g('spare'), ownCableM: g('ownCableM'), efPerKm: g('efPerKm'), thirdInc: g('thirdInc') };
+}
+function fillU() {
+  const d = DSO[$('dso').value], cur = +$('U').value;
+  $('U').innerHTML = d.voltages.map(v => `<option value="${v}">${v} kV</option>`).join('');
+  $('U').value = d.voltages.includes(cur) ? cur : d.voltages[d.voltages.length - 1];
+  $('thirdWrap').style.display = d.key === 'ves' ? 'flex' : 'none';
+  $('kytWrap').style.display = d.key === 'caruna' ? 'flex' : 'none';
+}
+// ---------- yksiviivakaavio ----------
+const S_ = 'stroke="#1d2733" stroke-width="1.6" fill="none"';
+const L = (x1, y1, x2, y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ${S_}/>`;
+const T = (x, y, t, o = {}) => `<text x="${x}" y="${y}" font-size="${o.s || 10.5}" text-anchor="${o.a || 'middle'}" fill="${o.c || '#1d2733'}" ${o.w ? 'font-weight="600"' : ''} paint-order="stroke" stroke="#fff" stroke-width="3" stroke-linejoin="round">${t}</text>`;
+function sw(x, y, kind) { let s = L(x, y, x, y + 6) + L(x, y + 6, x + 13, y + 30); if (kind === 'Q') s += L(x - 4, y + 2, x + 4, y + 10) + L(x + 4, y + 2, x - 4, y + 10); if (kind === 'KE') s += `<circle cx="${x}" cy="${y + 6}" r="2.6" fill="#fff" stroke="#1d2733" stroke-width="1.4"/>`; if (kind === 'E') s += L(x - 5, y + 6, x + 5, y + 6); return s + L(x, y + 30, x, y + 34); }
+const fuse = (x, y) => `<rect x="${x - 5}" y="${y}" width="10" height="24" ${S_}/>` + L(x, y - 2, x, y + 26) + L(x - 5, y + 6, x + 5, y + 6);
+const es = (x, y) => L(x, y, x + 16, y) + L(x + 16, y, x + 28, y - 10) + L(x + 30, y, x + 34, y) + L(x + 34, y - 7, x + 34, y + 7) + L(x + 37, y - 4, x + 37, y + 4) + L(x + 40, y - 2, x + 40, y + 2);
+const ct = (x, y) => `<circle cx="${x}" cy="${y}" r="7" ${S_}/>`;
+const vt = (x, y) => L(x, y, x - 26, y) + L(x - 26, y, x - 26, y + 10) + `<circle cx="${x - 26}" cy="${y + 17}" r="7" ${S_}/><circle cx="${x - 26}" cy="${y + 27}" r="7" ${S_}/>`;
+const term = (x, y, up) => up ? `<path d="M${x - 6} ${y + 9} L${x + 6} ${y + 9} L${x} ${y} Z" ${S_}/>` : `<path d="M${x - 6} ${y} L${x + 6} ${y} L${x} ${y + 9} Z" ${S_}/>`;
+const tfm = (x, y) => `<circle cx="${x}" cy="${y}" r="15" ${S_}/><circle cx="${x}" cy="${y + 20}" r="15" ${S_}/>`;
+const box = (x, y, w, h, lines, col = '#0b5cab') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="#f3f7fc" stroke="${col}" stroke-width="1.1"/>` + lines.map((t, i) => T(x + w / 2, y + 12 + i * 11, t, { s: 9, c: col })).join('');
+function drawSLD(r) {
+  const CW = 130, X0 = r.d.key === 'caruna' ? 230 : 60, BUS = 90, cells = r.cells, W = X0 + cells.length * CW + 60, H = 640, cx = i => X0 + i * CW + CW / 2;
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="background:#fff">`;
+  s += T(14, 22, `${r.inp.proj || ''} – KJ-pääkaavio (periaate) · ${r.d.name} · ${r.U} kV`, { a: 'start', s: 13, w: 1 });
+  s += T(14, 38, `Muuntajat ${r.n} × ${r.unit} kVA ${r.U}/0,4 kV Dyn11 · KJ-liittymisteho ${f0(r.Stot)} kVA · Pääkytkin: ${r.main === 'VKE' ? 'varokekuormanerotin' : 'releohjattu katkaisija'}`, { a: 'start', s: 10.5, c: '#5b6b7c' });
+  s += T(W - 14, 22, 'Periaatteellinen – ei toteutuskuva', { a: 'end', s: 9, c: '#9aa7b4' });
+  const iMain = cells.findIndex(c => c.t === 'MCB' || c.t === 'MVKE'), iMeas = cells.findIndex(c => c.t === 'MEAS'), hasB = !r.direct;
+  s += `<line x1="${X0 + 20}" y1="${BUS}" x2="${cx(iMain) + 20}" y2="${BUS}" stroke="#1d2733" stroke-width="4"/>` + T(X0 + 20, BUS - 8, 'Kisko A (liittymä)', { a: 'start', s: 9.5, c: '#5b6b7c' });
+  if (hasB) s += `<line x1="${cx(iMeas) - 20}" y1="${BUS}" x2="${cx(cells.length - 1) + 30}" y2="${BUS}" stroke="#1d2733" stroke-width="4"/>` + T(cx(iMeas) - 20, BUS - 8, 'Kisko B (asiakas)', { a: 'start', s: 9.5, c: '#5b6b7c' });
+  cells.forEach((c, i) => { const x0 = X0 + i * CW; s += `<rect x="${x0 + 3}" y="${BUS + 14}" width="${CW - 6}" height="300" fill="none" stroke="#c9d3dd" stroke-dasharray="3 3"/>` + T(x0 + CW / 2, H - 14, `=AH${String(i + 1).padStart(2, '0')}`, { s: 9.5, c: '#5b6b7c' }) + T(x0 + CW / 2, BUS + 28, c.name, { s: 9.5, w: 1 }); });
+  const relayTxt = r.relay.filter(x => /\(\d/.test(x)).map(x => x.match(/\(([^)]+)\)/)[1]);
+  const lv = (x, y, k) => T(x + 20, y - 34, `T${k}`, { s: 10, a: 'start', w: 1 }) + T(x + 20, y - 22, `${r.unit} kVA`, { s: 9, a: 'start' }) + L(x, y + 15, x, y + 30) + `<line x1="${x - 45}" y1="${y + 30}" x2="${x + 45}" y2="${y + 30}" stroke="#1d2733" stroke-width="3"/>` + T(x, y + 46, `PJ-pääkeskus ${k}`, { s: 9.5 }) + T(x, y + 58, `In ≈ ${f0(r.lvIn)} A · Ik ≈ ${f1(r.ik)} kA`, { s: 8.5, c: '#5b6b7c' });
+  cells.forEach((c, i) => {
+    const x = cx(i);
+    if (c.t === 'INC') { s += L(x, BUS, x, BUS + 40) + sw(x, BUS + 40, 'KE') + L(x, BUS + 74, x, BUS + 200) + es(x, BUS + 120) + ct(x, BUS + 160) + T(x + 12, BUS + 164, 'OI', { s: 8.5, a: 'start' });
+      if (r.d.key === 'ves') s += box(x - 56, BUS + 40, 30, 22, ['M', '24V']) + T(x - 41, BUS + 76, 'VPIS·P', { s: 8 });
+      s += term(x, BUS + 200) + L(x, BUS + 209, x, BUS + 290) + `<line x1="${x - 40}" y1="${BUS + 204}" x2="${x + 40}" y2="${BUS + 204}" stroke="#c5221f" stroke-width="1.4" stroke-dasharray="5 3"/>` + T(x, BUS + 222, 'liittämiskohta', { s: 8.5, c: '#c5221f' }) + T(x, BUS + 305, `${r.d.short} KJ-kaapeli`, { s: 9 }) + T(x, BUS + 316, 'AHXAMK-W 3×185/240', { s: 8.5, c: '#5b6b7c' }); }
+    if (c.t === 'CINC') { s += L(x, BUS, x, BUS + 40) + sw(x, BUS + 40, 'KE') + L(x, BUS + 74, x, BUS + 200) + es(x, BUS + 120) + term(x, BUS + 200) + L(x, BUS + 209, x, BUS + 280) + L(x, BUS + 280, 150, BUS + 280) + L(150, BUS + 280, 150, BUS + 210) + term(150, BUS + 200, true) + T((x + 150) / 2, BUS + 294, 'Asiakkaan liittymisjohto', { s: 9 });
+      s += `<rect x="20" y="${BUS + 40}" width="180" height="200" fill="#f6fbf1" stroke="#5aa02c" stroke-dasharray="7 4"/>` + T(110, BUS + 58, 'Carunan kytkemö /', { s: 10, w: 1, c: '#3a7d1a' }) + T(110, BUS + 71, 'sähköasema', { s: 10, w: 1, c: '#3a7d1a' }) + `<circle cx="150" cy="${BUS + 196}" r="4" fill="#c5221f"/>` + T(140, BUS + 190, 'Liittämiskohta', { s: 9, a: 'end', c: '#c5221f' }); }
+    if (c.t === 'MCB' || c.t === 'MVKE') { s += L(x, BUS, x, BUS + 40);
+      if (c.t === 'MCB') s += sw(x, BUS + 40, 'E') + L(x, BUS + 74, x, BUS + 84) + sw(x, BUS + 84, 'Q') + L(x, BUS + 118, x, BUS + 250) + ct(x, BUS + 150) + es(x, BUS + 200) + `<line x1="${x + 7}" y1="${BUS + 150}" x2="${x + 18}" y2="${BUS + 150}" stroke="#0b5cab" stroke-dasharray="3 2"/>` + box(x + 18, BUS + 130, 44, 12 + relayTxt.length * 11, relayTxt.length ? relayTxt : ['Rele']);
+      else s += sw(x, BUS + 40, 'KE') + L(x, BUS + 74, x, BUS + 100) + fuse(x, BUS + 100) + L(x, BUS + 126, x, BUS + 250) + es(x, BUS + 170) + T(x + 12, BUS + 116, `${r.fuse} A`, { s: 9, a: 'start' });
+      s += L(x, BUS + 250, cx(iMeas), BUS + 250); }
+    if (c.t === 'MEAS') { s += ct(x, BUS + 210) + T(x + 11, BUS + 214, `${r.ctMeas}/5 A`, { s: 8.5, a: 'start' }) + vt(x, BUS + 170) + T(x - 26, BUS + 226, 'VT', { s: 8.5 }) + box(x + 14, BUS + 150, 46, 24, ['kWh', 'mittaus']);
+      if (hasB) s += L(x, BUS + 250, x, BUS); else s += L(x, BUS + 250, x, BUS + 330) + term(x, BUS + 330) + L(x, BUS + 339, x, BUS + 365) + tfm(x, BUS + 380) + lv(x, BUS + 420, 1); }
+    if (c.t === 'TVKE' || c.t === 'TCB' || c.t === 'SUB') { s += L(x, BUS, x, BUS + 40);
+      if (c.t === 'TVKE') s += sw(x, BUS + 40, 'KE') + L(x, BUS + 74, x, BUS + 100) + fuse(x, BUS + 100) + L(x, BUS + 126, x, BUS + 280) + es(x, BUS + 170) + T(x + 12, BUS + 116, `${r.fuse} A`, { s: 9, a: 'start' });
+      else { s += sw(x, BUS + 40, 'E') + L(x, BUS + 74, x, BUS + 84) + sw(x, BUS + 84, 'Q') + L(x, BUS + 118, x, BUS + 280) + ct(x, BUS + 150) + es(x, BUS + 200); const rl = c.t === 'SUB' ? (r.d.key === 'caruna' ? ['50/51', '67N'] : ['50/51', '51N']) : ['50/51', '51N']; s += box(x + 14, BUS + 136, 40, 12 + rl.length * 11, rl); }
+      s += term(x, BUS + 280) + L(x, BUS + 289, x, BUS + 330);
+      if (c.t === 'SUB') s += `<path d="M${x - 7} ${BUS + 330} L${x + 7} ${BUS + 330} L${x} ${BUS + 344} Z" fill="#1d2733"/>` + T(x, BUS + 360, 'Alamuuntamolle', { s: 9.5 });
+      else s += term(x, BUS + 331, true) + L(x, BUS + 340, x, BUS + 365) + tfm(x, BUS + 380) + lv(x, BUS + 420, c.idx); }
+    if (c.t === 'SPARE') s += `<line x1="${x}" y1="${BUS}" x2="${x}" y2="${BUS + 60}" stroke="#9aa7b4" stroke-width="1.4" stroke-dasharray="4 3"/>` + T(x, BUS + 120, 'Tilavaraus /', { s: 10, c: '#5b6b7c' }) + T(x, BUS + 133, 'laajennus', { s: 10, c: '#5b6b7c' });
+  });
+  return s + '</svg>';
+}
+function cellRows(r) {
+  const rl = r.relay.filter(x => /\(\d/.test(x)).map(x => x.match(/\(([^)]+)\)/)[1]).join(', ');
+  return r.cells.map((c, i) => { let eq = '';
+    switch (c.t) {
+      case 'INC': eq = 'Kuormanerotin + maadoituskytkin, oikosulkuilmaisin, kapasitiivinen jänniteilmaisin' + (r.d.key === 'ves' ? ', moottoriohjain 24 VDC (VES:n RTU), kaasunpainemittaus, tilatiedot' : '') + '. Verkkoyhtiön kaapelipääte.'; break;
+      case 'CINC': eq = 'Kuormanerotin + maadoituskytkin (liittymisjohdon työmaadoitus kaapelin suuntaan), kaapelipääte – tyyppi hyväksytettävä Carunalla.'; break;
+      case 'MCB': eq = `Erotin, katkaisija (katkaisukyky ≥ ${r.d.key === 'caruna' ? '16 kA' : 'verkon Ik'}), suojavirtamuuntajat, suojarele (${rl}), maadoituskytkin. Kaapelivirtamuuntaja maasulkuun.`; break;
+      case 'MVKE': eq = `Varokekuormanerotin, KJ-sulake ${r.fuse} A (laukaisu kolminapaisesti), maadoituskytkimet.`; break;
+      case 'MEAS': eq = `Laskutusmittauksen virtamuuntajat ~${r.ctMeas}/5 A ja jännitemuuntajat; mittauskotelo. Mitoitus verkkoyhtiön mittausohjeen mukaan.`; break;
+      case 'TVKE': eq = `Varokekuormanerotin, KJ-sulake ${r.fuse} A, maadoituskytkimet → T${c.idx} ${r.unit} kVA.`; break;
+      case 'TCB': eq = `Katkaisija + rele (50/51, 51N) → T${c.idx} ${r.unit} kVA.`; break;
+      case 'SUB': eq = `Katkaisija + rele (50/51, ${r.d.key === 'caruna' ? '67N' : '51N'}), kaapelivirtamuuntaja → alamuuntamo.`; break;
+      case 'SPARE': eq = 'Tilavaraus tai kalustettu varakenno.'; break; }
+    return `<tr><td>=AH${String(i + 1).padStart(2, '0')}</td><td>${c.name}</td><td>${eq}</td><td>${c.w}</td></tr>`; }).join('');
+}
+
+// ================= TILAEDITORI =================
+const ED = { M: null, sel: null, V: null, drag: null, hist: [], key: null, r: null, lo: null };
+const STORE = 'muuntamoModel4';
+const edKey = (r, lo) => [r.d.key, r.n, r.unit, r.cells.map(c => c.t).join(''), r.inp.reserveTf ? 1 : 0, lo.indoorKyt && r.d.key === 'caruna' ? 1 : 0, lo.tfType, lo.swgDepth, lo.pjFront, lo.comp ? 1 : 0].join('_');
+const getStore = () => { try { return JSON.parse(localStorage.getItem(STORE) || '{}'); } catch (e) { return {}; } };
+function edSave() { const st = getStore(); st[ED.key] = ED.M; try { localStorage.setItem(STORE, JSON.stringify(st)); } catch (e) { } }
+function edLoad(r, lo) { ED.r = r; ED.lo = lo; const key = edKey(r, lo); if (ED.key === key && ED.M) return; ED.key = key; ED.M = getStore()[key] || proposal(r, lo); ED.sel = null; ED.V = null; ED.hist = []; }
+function edNew() { edPush(); ED.M = proposal(ED.r, ED.lo); ED.sel = null; edSave(); edDraw(true); }
+const edPush = () => { ED.hist.push(JSON.stringify(ED.M)); if (ED.hist.length > 100) ED.hist.shift(); };
+function edUndo() { const h = ED.hist.pop(); if (!h) return; ED.M = JSON.parse(h); ED.sel = null; edSave(); edDraw(); }
+function edFit() { ED.V = null; edDraw(true); }
+function edDraw(refit) {
+  const M = ED.M, r = ED.r, dc = decoPts(r, M);
+  const nv = viewOf(M, dc.pts);
+  if (refit || !ED.V || nv.ox < ED.V.ox - 1 || nv.oy < ED.V.oy - 1 || nv.x1 > ED.V.x1 + 1 || nv.y1 > ED.V.y1 + 1) { if (!ED.drag) ED.V = nv; else if (!ED.V) ED.V = nv; }
+  const chk = validate(r, M);
+  $('lay').innerHTML = renderLayout(r, M, ED.V, { sel: ED.sel || {}, marks: chk.marks });
+  $('clash').innerHTML = chk.msg.length ? `<div class="note err">Tarkista: ${chk.msg.join(' · ')}</div>` : '<div class="note ok">Ei ristiriitoja – huoltovälit, ovet, IV, korkeudet ja kiskosillat kunnossa.</div>';
+  if (!ED.drag) { edProps(); edTables(); }
+}
+function toMM(ev) { const svg = $('lay').querySelector('svg'), pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY; const u = pt.matrixTransform(svg.getScreenCTM().inverse()), V = ED.V; return { x: (u.x - V.px) / V.scale + V.ox, y: (u.y - V.py) / V.scale + V.oy }; }
+const selObj = () => { const S = ED.sel, M = ED.M; if (!S) return null; if (S.t === 'room') return R_(M, S.id); if (S.t === 'el') return M.els.find(e => e.id === S.id); if (S.t === 'op') return (R_(M, S.room) || { open: [] }).open.find(o => o.id === S.id); if (S.t === 'conn') return M.conns.find(c => c.id === S.id); };
+// --- osoitin
+$('lay').addEventListener('pointerdown', ev => {
+  const t = ev.target.closest('[data-k]'), M = ED.M;
+  if (!t) { ED.sel = null; edDraw(); return; }
+  ev.preventDefault(); const k = t.dataset.k, m = toMM(ev);
+  const sig = k + '|' + (t.dataset.id || t.dataset.c || '') + '|' + (t.dataset.s || t.dataset.i || ''), now = Date.now();
+  if (ED.lastDown && ED.lastDown.sig === sig && now - ED.lastDown.t < 400) { ED.lastDown = null; edDbl(t, ev); return; }
+  ED.lastDown = { sig, t: now };
+  edPush(); ED.drag = { k, m0: m, moved: false };
+  if (k === 'room') { const R = R_(M, t.dataset.id); ED.sel = { t: 'room', id: R.id }; const w = {}; connsOfRoom(M, R).forEach(c => { if (c.wps) w[c.id] = c.wps.map(p => ({ ...p })); }); ED.drag.o = { x: R.x, y: R.y, r0: roomRect(R), w }; }
+  else if (k === 'rh') { const R = R_(M, ED.sel.id); ED.drag.dir = t.dataset.d; ED.drag.o = JSON.parse(JSON.stringify({ R, els: M.els.filter(e => e.room === R.id) })); }
+  else if (k === 'el') { const e = M.els.find(z => z.id === t.dataset.id), g = gRect(M, e); ED.sel = { t: 'el', id: e.id }; ED.drag.o = { gx: g.x, gy: g.y }; }
+  else if (k === 'op') ED.sel = { t: 'op', id: t.dataset.id, room: t.dataset.r };
+  else if (k === 'cseg' || k === 'cpt') {
+    const c = M.conns.find(z => z.id === t.dataset.c), P = connPath(M, c); ED.sel = { t: 'conn', id: c.id }; ED.drag.c = c;
+    if (k === 'cseg') { let s = +t.dataset.s; const Q = P.map(p => ({ ...p })); if (s === 0) { Q.splice(1, 0, { ...Q[0] }); s = 1; } if (s === Q.length - 2) Q.splice(Q.length - 1, 0, { ...Q[Q.length - 1] });
+      ED.drag.Q = Q; ED.drag.s = s; ED.drag.hor = Math.abs(Q[s].y - Q[s + 1].y) < .5; ED.drag.o = ED.drag.hor ? Q[s].y : Q[s].x; }
+    else { ED.drag.Q = P.map(p => ({ ...p })); ED.drag.i = +t.dataset.i; ED.drag.o = { ...ED.drag.Q[ED.drag.i] }; }
+  }
+  const d = ED.drag; ED.drag = null; edDraw(); ED.drag = d;
+});
+window.addEventListener('pointermove', ev => {
+  const D = ED.drag; if (!D) return; const m = toMM(ev), dx = m.x - D.m0.x, dy = m.y - D.m0.y, M = ED.M;
+  if (!D.moved && Math.hypot(dx, dy) * ED.V.scale < 3) return; D.moved = true;
+  if (D.k === 'room') { const R = R_(M, ED.sel.id); [R.x, R.y] = snapRoom(M, R, snap(D.o.x + dx), snap(D.o.y + dy)); moveRoomConns(M, R, D.o.r0, R.x - D.o.x, R.y - D.o.y, D.o.w); }
+  else if (D.k === 'rh') {
+    const o = D.o.R, R = R_(M, o.id), dir = D.dir, ddx = snap(dx), ddy = snap(dy); let sx = 0, sy = 0;
+    R.x = o.x; R.y = o.y; R.W = o.W; R.H = o.H;
+    if (dir.includes('e')) R.W = Math.max(1000, o.W + ddx);
+    if (dir.includes('w')) { const nW = Math.max(1000, o.W - ddx); sx = o.W - nW; R.x = o.x + sx; R.W = nW; }
+    if (dir.includes('s')) R.H = Math.max(1000, o.H + ddy);
+    if (dir.includes('n')) { const nH = Math.max(1000, o.H - ddy); sy = o.H - nH; R.y = o.y + sy; R.H = nH; }
+    D.o.els.forEach(oe => { const e = M.els.find(z => z.id === oe.id); if (e) { e.x = oe.x - sx; e.y = oe.y - sy; } });
+    R.open.forEach(op => { const oo = o.open.find(z => z.id === op.id); if (oo) op.off = (op.side === 't' || op.side === 'b') ? oo.off - sx : oo.off - sy; });
+  }
+  else if (D.k === 'el') { const e = M.els.find(z => z.id === ED.sel.id), R = R_(M, e.room); e.x = snap(D.o.gx + dx) - R.x; e.y = snap(D.o.gy + dy) - R.y; }
+  else if (D.k === 'op') { const R = R_(M, ED.sel.room), o = R.open.find(z => z.id === ED.sel.id);
+    const dist = { t: Math.abs(m.y - R.y), b: Math.abs(m.y - R.y - R.H), l: Math.abs(m.x - R.x), r: Math.abs(m.x - R.x - R.W) }, s = Object.keys(dist).sort((a, b) => dist[a] - dist[b])[0];
+    o.side = s; o.off = snap(Math.max(0, Math.min(wallLen(R, s) - o.w, (s === 't' || s === 'b' ? m.x - R.x : m.y - R.y) - o.w / 2))); }
+  else if (D.k === 'cseg') { const Q = D.Q.map(p => ({ ...p })), v = snap(D.o + (D.hor ? dy : dx)); if (D.hor) { Q[D.s].y = v; Q[D.s + 1].y = v; } else { Q[D.s].x = v; Q[D.s + 1].x = v; } D.c.wps = Q.slice(1, -1); }
+  else if (D.k === 'cpt') { const Q = D.Q.map(p => ({ ...p })); Q[D.i] = { x: snap(D.o.x + dx), y: snap(D.o.y + dy) }; D.c.wps = Q.slice(1, -1); }
+  edDraw();
+});
+window.addEventListener('pointerup', () => {
+  const D = ED.drag; if (!D) return; ED.drag = null; const M = ED.M;
+  if (!D.moved) { ED.hist.pop(); edDraw(); return; }
+  if (D.k === 'el') { const e = M.els.find(z => z.id === ED.sel.id), g = gRect(M, e), c = { x: g.x + g.w / 2, y: g.y + g.h / 2 };
+    const NR = M.rooms.find(q => inR(c, roomRect(q))); if (NR && NR.id !== e.room) { e.room = NR.id; e.x = g.x - NR.x; e.y = g.y - NR.y; } wallSnap(M, e); }
+  if (D.c && D.c.wps) { const E = connEnds(M, D.c); D.c.wps = clean([E[0], ...D.c.wps, E[1]]).slice(1, -1); }
+  edSave(); edDraw();
+});
+function edDbl(t, ev) {
+  const M = ED.M, k = t.dataset.k;
+  if (k === 'el') { edPush(); rotEl(M, M.els.find(z => z.id === t.dataset.id)); }
+  else if (k === 'cseg') { edPush(); const c = M.conns.find(z => z.id === t.dataset.c), P = connPath(M, c), s = +t.dataset.s, m = toMM(ev), a = P[s];
+    const pt = Math.abs(a.y - P[s + 1].y) < .5 ? { x: snap(m.x), y: a.y } : { x: a.x, y: snap(m.y) }; const w = P.slice(1, -1); w.splice(s, 0, pt); c.wps = w; ED.sel = { t: 'conn', id: c.id }; }
+  else if (k === 'cpt') { edPush(); const c = M.conns.find(z => z.id === t.dataset.c), w = connPath(M, c).slice(1, -1); w.splice(+t.dataset.i - 1, 1); c.wps = w; }
+  else if (k === 'room') { ED.sel = { t: 'room', id: t.dataset.id }; }
+  else return;
+  edSave(); edDraw();
+}
+document.addEventListener('keydown', ev => {
+  if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z') { edUndo(); ev.preventDefault(); return; }
+  const S = ED.sel, M = ED.M; if (!S || !M) return; const o = selObj(); if (!o) return;
+  const ar = { ArrowLeft: [-50, 0], ArrowRight: [50, 0], ArrowUp: [0, -50], ArrowDown: [0, 50] }[ev.key];
+  if (ev.key === 'Delete' || ev.key === 'Backspace') { edPush(); edDelete(); }
+  else if (ev.key === 'r' || ev.key === 'R') { edPush(); if (S.t === 'el') rotEl(M, o); else if (S.t === 'room') rotRoom(M, o); else return; }
+  else if (ev.key === 'Escape') ED.sel = null;
+  else if (ar && S.t === 'el') { edPush(); o.x += ar[0]; o.y += ar[1]; }
+  else if (ar && S.t === 'room') { edPush(); setRoomPos(M, o, o.x + ar[0], o.y + ar[1]); }
+  else if (ar && S.t === 'op') { edPush(); o.off += (o.side === 't' || o.side === 'b') ? ar[0] : ar[1]; }
+  else return;
+  ev.preventDefault(); edSave(); edDraw();
+});
+function edDelete() {
+  const S = ED.sel, M = ED.M; if (!S) return;
+  if (S.t === 'el') { M.els = M.els.filter(e => e.id !== S.id); M.conns = M.conns.filter(c => c.a.el !== S.id && c.b.el !== S.id); }
+  if (S.t === 'op') { const R = R_(M, S.room); R.open = R.open.filter(o => o.id !== S.id); }
+  if (S.t === 'room') { const ids = M.els.filter(e => e.room === S.id).map(e => e.id); M.els = M.els.filter(e => e.room !== S.id); M.conns = M.conns.filter(c => !ids.includes(c.a.el) && !ids.includes(c.b.el)); M.rooms = M.rooms.filter(q => q.id !== S.id); }
+  if (S.t === 'conn') M.conns = M.conns.filter(c => c.id !== S.id);
+  ED.sel = null;
+}
+// --- ominaisuuspaneeli
+const fNum = (lab, f, v, st = 50) => `<div><label>${lab}</label><input type="number" step="${st}" data-f="${f}" value="${v ?? ''}"></div>`;
+const fTxt = (lab, f, v) => `<label>${lab}</label><input data-f="${f}" value="${(v ?? '').toString().replace(/"/g, '&quot;')}">`;
+const fSel = (lab, f, v, opts) => `<div><label>${lab}</label><select data-f="${f}">${opts.map(([k, t]) => `<option value="${k}" ${String(k) === String(v) ? 'selected' : ''}>${t}</option>`).join('')}</select></div>`;
+const fChk = (lab, f, v) => `<label class="chk"><input type="checkbox" data-f="${f}" ${v ? 'checked' : ''}> ${lab}</label>`;
+const bt = (a, t, cls = 'sec') => `<button class="${cls}" data-a="${a}">${t}</button>`;
+const SIDES = [['t', 'Ylä'], ['r', 'Oikea'], ['b', 'Ala'], ['l', 'Vasen']];
+function edProps() {
+  const M = ED.M, S = ED.sel, o = selObj(); let h = '';
+  if (!S || !o) {
+    h = `<h3>Ei valintaa</h3><p class="disc">Klikkaa tilan lattiaa, laitetta, ovea/säleikköä tai kiskosiltaa/kaapelia muokataksesi sen ominaisuuksia.</p>
+    <hr><b>Kaikki tilat</b><table>${M.rooms.map(R => `<tr><td><a href="#" data-sel="${R.id}">${R.name}</a></td><td>${f1(R.W / 1000)}×${f1(R.H / 1000)}</td></tr>`).join('')}</table>`;
+  } else if (S.t === 'room') {
+    const rq = reqH(M, o);
+    h = `<h3>Tila</h3>${fTxt('Nimi', 'name', o.name)}<div class="row">${fNum('X (mm)', 'x', o.x)}${fNum('Y (mm)', 'y', o.y)}${fNum('Leveys (mm)', 'W', o.W)}${fNum('Syvyys (mm)', 'H', o.H)}</div>
+    <hr><b>Lattia ja korkeus</b>${fSel('Lattiarakenne', 'floor', o.floor, FLOORS)}<div class="row">${fNum(o.floor === 'asennuslattia' ? 'Asennuslattian korkeus' : 'Kanaalin syvyys', 'floorD', o.floorD)}${fNum('Varaus laitteiden yllä', 'topClear', o.topClear)}</div>
+    ${fNum('Huonekorkeus (tyhjä = vaadittu)', 'ceil', o.ceil)}
+    <p class="disc">Vaadittu vapaa korkeus: <span class="val">${rq ? f0(rq) + ' mm' : '–'}</span>${rq ? ` = ${o.floor === 'asennuslattia' ? 'asennuslattia ' + f0(o.floorD) + ' + ' : ''}korkein laite ${f0(Math.max(...M.els.filter(e => e.room === o.id && e.type !== 'pe').map(e => e.h)))} + varaus ${f0(o.topClear)}` : ''}${o.floor === 'kanaali' ? '. Kanaali ei nosta lattiaa.' : ''}</p>
+    <div class="btns">${bt('rotRoom', '⟳ Kierrä 90°')}${bt('mirRoom', '⇋ Peilaa')}${bt('fitRoom', 'Sovita laitteisiin')}${bt('pushRoom', 'Väistä naapurit')}</div>
+    <hr><b>Lisää aukko</b><div class="btns">${bt('addOp:ovi', 'Ovi')}${bt('addOp:tupla', 'Tuplaovi')}${bt('addOp:iv_tulo', 'IV tulo')}${bt('addOp:iv_poisto', 'IV poisto')}${bt('addOp:lapivienti', 'Läpivienti')}</div>
+    <hr><b>Lisää laite tilaan</b><div class="btns"><select id="addElSel" style="width:170px">${ADDABLE.map(t => `<option value="${t}">${EDEF[t].n}</option>`).join('')}</select>${bt('addEl', '+ Lisää', '')}</div>
+    <hr><div class="btns">${bt('delRoom', 'Poista tila', 'del')}</div>`;
+  } else if (S.t === 'el') {
+    const swgL = o.type === 'swg';
+    h = `<h3>Laite</h3>${fTxt('Nimi', 'name', o.name)}<div class="row">
+    ${swgL ? `<div><label>Leveys (kennoista)</label><input disabled value="${o.w}"></div>` : fNum('Leveys (mm)', 'w', o.w)}${fNum('Syvyys (mm)', 'd', o.d)}${fNum('Korkeus (mm)', 'h', o.h)}
+    ${fSel('Kierto', 'rot', o.rot, [[0, '0° (etu alas)'], [1, '90° (etu vasemmalle)'], [2, '180° (etu ylös)'], [3, '270° (etu oikealle)']])}${fNum('X tilassa', 'x', o.x)}${fNum('Y tilassa', 'y', o.y)}</div>
+    ${fSel('Tila', 'room', o.room, M.rooms.map(R => [R.id, R.name]))}
+    <hr><b>Huolto- ja hoitovälit (mm)</b><div class="row">${fNum('Edessä', 'clear.b', o.clear.b)}${fNum('Takana', 'clear.t', o.clear.t)}${fNum('Vasen', 'clear.l', o.clear.l)}${fNum('Oikea', 'clear.r', o.clear.r)}</div>
+    ${swgL ? `<div class="row">${fNum('Kaapelipäätteen korkeus kojeiston pohjasta', 'term', o.term)}</div>` : ''}
+    ${o.type === 'board' ? `<div class="row">${fNum('Tulokentän leveys', 'inc', o.inc)}${fNum('Yhdyskentän leveys', 'cpl', o.cpl)}</div>${fChk('Kompensointikenttä 800 mm', 'comp', o.comp)}` : ''}
+    ${o.type === 'tf' ? fChk('Öljymuuntaja (keruuallas)', 'oil', o.oil) : ''}
+    <p class="disc">${(EDEF[o.type] || {}).src || ''}</p>
+    <div class="btns">${bt('rotEl', '⟳ Kierrä 90°')}${bt('dupEl', 'Monista')}${bt('delEl', 'Poista', 'del')}</div>`;
+  } else if (S.t === 'op') {
+    const R = R_(M, S.room);
+    h = `<h3>${o.type === 'ovi' ? 'Ovi' : 'Aukko'} – ${R.name}</h3>${fTxt('Teksti', 'label', o.label)}<div class="row">
+    ${fSel('Tyyppi', 'type', o.type, [['ovi', 'Ovi'], ['iv_tulo', 'IV tulo'], ['iv_poisto', 'IV poisto'], ['lapivienti', 'Läpivienti']])}${fSel('Seinä', 'side', o.side, SIDES)}
+    ${fNum('Leveys yht. (mm)', 'w', o.w)}${fNum('Korkeus (mm)', 'h', o.h)}${fNum('Etäisyys nurkasta', 'off', o.off)}</div>
+    ${o.type === 'ovi' ? `${fChk('Tuplaovi (2 lehteä)', 'dbl', o.dbl)}<div class="row">${fSel('Avautuu', 'dir', o.dir, [['ulos', 'Ulos'], ['sisaan', 'Sisään']])}${o.dbl ? '' : fSel('Sarana', 'hinge', o.hinge, [['v', 'Alku'], ['o', 'Loppu']])}</div>` : ''}
+    <p class="disc">Seinän pituus ${f0(wallLen(R, o.side))} mm. ${o.type === 'ovi' && o.dbl ? `Lehdet 2 × ${f0(o.w / 2)} mm.` : ''}</p>
+    <div class="btns">${bt('delOp', 'Poista', 'del')}</div>`;
+  } else if (S.t === 'conn') {
+    const P = connPath(M, o), a = M.els.find(e => e.id === o.a.el), b = M.els.find(e => e.id === o.b.el);
+    const KN = { kisko: 'Kiskosilta', kj: 'KJ-kaapeli', yhdys: 'Yhdyskisko/-kaapeli', hylly: 'Kaapelihylly', kyt: 'Liittymisjohto' };
+    h = `<h3>${KN[o.kind]}</h3><p>${a ? a.name : '?'} → ${b ? b.name : '?'}</p><p class="disc">Reitin pituus tasossa ~<span class="val">${P ? f1(pathLen(P) / 1000) : '–'} m</span> (ilman nousuja). Taitepisteitä ${P ? P.length - 2 : 0}.</p>
+    <p class="disc">Raahaa osuutta kohtisuoraan, tuplaklikkaa osuutta lisätäksesi taitepisteen ja taitepistettä poistaaksesi sen.</p>
+    <div class="btns">${bt('resetConn', 'Palauta automaattireitti')}${bt('delConn', 'Poista liitäntä', 'del')}</div>`;
+  }
+  $('props').innerHTML = h;
+}
+$('props').addEventListener('click', ev => {
+  const s = ev.target.closest('[data-sel]'); if (s) { ev.preventDefault(); ED.sel = { t: 'room', id: s.dataset.sel }; edDraw(); return; }
+  const b = ev.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a, M = ED.M, o = selObj(); edPush();
+  if (a === 'rotRoom') rotRoom(M, o); else if (a === 'mirRoom') mirRoom(M, o); else if (a === 'fitRoom') { fitRoom(M, o); nudgeFree(M, o); }
+  else if (a === 'pushRoom') nudgeFree(M, o);
+  else if (a.startsWith('addOp:')) { const t = a.split(':')[1], typ = t === 'tupla' ? 'ovi' : t, w = t === 'tupla' ? 1800 : t === 'ovi' ? 1000 : t === 'lapivienti' ? 300 : 600;
+    const p = mkOpen(M, o, typ, 't', snap(Math.max(0, (o.W - w) / 2)), w, { dbl: t === 'tupla', label: t === 'tupla' ? 'tuplaovi' : OPLAB[typ] }); ED.sel = { t: 'op', id: p.id, room: o.id }; }
+  else if (a === 'addEl') { const t = $('addElSel').value, extra = {};
+    if (t === 'tf') { const td = TF_DIM[ED.r.unit] || TF_DIM[3150], k = M.els.filter(e => e.type === 'tf').length + 1; Object.assign(extra, { w: td[0], d: td[1], h: td[2], idx: k, name: `Muuntaja T${k} ${ED.r.unit} kVA` }); }
+    if (t === 'board') { const k = M.els.filter(e => e.type === 'board').length + 1; Object.assign(extra, { idx: k, inc: 800, cpl: 0, comp: false, name: `PJ-keskus ${k}` }); }
+    const e = mkEl(M, t, o.id, 0, 0, extra); if (!freeSpot(M, o, e)) nudgeFree(M, o); ED.sel = { t: 'el', id: e.id }; }
+  else if (a === 'delRoom' || a === 'delEl' || a === 'delOp' || a === 'delConn') edDelete();
+  else if (a === 'rotEl') rotEl(M, o);
+  else if (a === 'dupEl') { const e = JSON.parse(JSON.stringify(o)); e.id = o.type + (M.seq++); e.name = o.name + ' (kopio)'; M.els.push(e); freeSpot(M, R_(M, e.room), e); ED.sel = { t: 'el', id: e.id }; }
+  else if (a === 'resetConn') o.wps = null;
+  edSave(); edDraw();
+});
+$('props').addEventListener('change', ev => {
+  const f = ev.target.dataset.f; if (!f) return; const o = selObj(), M = ED.M; if (!o) return; edPush();
+  if (ED.sel.t === 'room' && (f === 'x' || f === 'y')) { const v = +ev.target.value || 0; setRoomPos(M, o, f === 'x' ? v : o.x, f === 'y' ? v : o.y); edSave(); edDraw(); return; }
+  let v = ev.target.type === 'checkbox' ? ev.target.checked : ev.target.type === 'number' ? (ev.target.value === '' ? null : +ev.target.value) : ev.target.value;
+  if (ED.sel.t === 'el' && f === 'rot') { while (o.rot !== +v) rotEl(M, o); }
+  else if (ED.sel.t === 'el' && f === 'room') { const g = gRect(M, o), NR = R_(M, v); o.room = v; o.x = snap(g.x - NR.x); o.y = snap(g.y - NR.y); if (!inR({ x: g.x + g.w / 2, y: g.y + g.h / 2 }, roomRect(NR))) freeSpot(M, NR, o); }
+  else if (f.startsWith('clear.')) o.clear[f.split('.')[1]] = Math.max(0, v || 0);
+  else if (ED.sel.t === 'op' && f === 'type') { if (o.label === OPLAB[o.type] || o.label === 'tuplaovi') o.label = OPLAB[v]; o.type = v; if (v !== 'ovi') o.dbl = false; }
+  else if (ED.sel.t === 'op' && f === 'dbl') { o.dbl = v; if (v && o.w < 1600) o.w = 1800; if (o.label === 'ovi' && v) o.label = 'tuplaovi'; else if (o.label === 'tuplaovi' && !v) o.label = 'ovi'; }
+  else if (ED.sel.t === 'room' && (f === 'W' || f === 'H')) { o[f] = Math.max(500, snap(v || 500)); nudgeFree(M, o); }
+  else if (f === 'ceil') o.ceil = v ? v : null;
+  else o[f] = (typeof v === 'number') ? v : v;
+  if (ED.sel.t === 'el' && (f === 'inc' || f === 'cpl')) o[f] = Math.max(0, v || 0);
+  edSave(); edDraw();
+});
+function edAddRoom() { edPush(); const M = ED.M, p = ROOM_PRESETS[$('addRoomSel').value], x = M.rooms.length ? Math.max(...M.rooms.map(q => q.x + q.W)) + WALL : 0;
+  const R = mkRoom(M, 'R' + (M.seq++), p[0], 'muu', x, 0, p[1], p[2], { floor: 'ei', topClear: 600 }); mkOpen(M, R, 'ovi', 'b', 300, 1000);
+  ED.sel = { t: 'room', id: R.id }; edSave(); edDraw(true); }
+function edTables() {
+  const M = ED.M;
+  $('layRooms').innerHTML = `<table><tr><th>Tila</th><th>Leveys × syvyys</th><th>Pinta-ala</th><th>Lattia</th><th>Vaadittu korkeus</th><th>Huonekorkeus</th></tr>${M.rooms.map(R => { const rq = reqH(M, R);
+    return `<tr><td>${R.name}</td><td>${f1(R.W / 1000)} × ${f1(R.H / 1000)} m</td><td>${f1(R.W * R.H / 1e6)} m²</td><td>${R.floor === 'ei' ? '–' : (R.floor === 'kanaali' ? 'kanaali ' : 'asennuslattia ') + f0(R.floorD)}</td><td>${rq ? f0(rq) + ' mm' : '–'}</td><td>${R.ceil ? f0(R.ceil) + ' mm' + (R.ceil < rq ? ' ⚠' : '') : '(= vaadittu)'}</td></tr>`; }).join('')}<tr><th>Yhteensä</th><th></th><th>${f1(M.rooms.reduce((a, q) => a + q.W * q.H / 1e6, 0))} m²</th><th></th><th></th><th></th></tr></table>`;
+  const rows = [];
+  M.rooms.forEach(R => {
+    M.els.filter(e => e.room === R.id).forEach(e => rows.push([R.name, e.name, `${f0(e.w)} × ${f0(e.d)} × ${f0(e.h)} mm; huoltovälit e/t/v/o ${e.clear.b}/${e.clear.t}/${e.clear.l}/${e.clear.r}`, (EDEF[e.type] || {}).src || '']));
+    R.open.forEach(o => rows.push([R.name, o.type === 'ovi' ? (o.dbl ? 'Tuplaovi' : 'Ovi') + ` (${o.label})` : o.label, `${o.dbl ? '2 × ' + f0(o.w / 2) : f0(o.w)} × ${f0(o.h)} mm, avautuu ${o.dir === 'sisaan' ? 'sisään' : 'ulos'}`, o.type === 'ovi' ? (ED.r.d.key === 'caruna' ? 'Caruna 8: iLOQ C-taso, 24/7' : 'Verkkoyhtiön pääsy 24/7') : '']));
+    if (R.floor !== 'ei') rows.push([R.name, R.floor === 'asennuslattia' ? 'Asennuslattia' : 'Kaapelikanaali', `${f0(R.floorD)} mm`, ED.r.d.key === 'ves' && M.els.some(e => e.room === R.id && e.type === 'swg') ? 'VES pääkaaviot: kaapelikenkien kiinnitys ~1500 mm pohjasta' : '']);
+  });
+  M.conns.forEach(c => { const P = connPath(M, c); if (!P) return; const a = M.els.find(e => e.id === c.a.el), b = M.els.find(e => e.id === c.b.el);
+    rows.push(['Liitännät', { kisko: 'Kiskosilta', kj: 'KJ-kaapeli', yhdys: 'Yhdys', hylly: 'Kaapelihylly', kyt: 'Liittymisjohto' }[c.kind] + ` ${shortN(a)} → ${shortN(b)}`, `~${f1(pathLen(P) / 1000)} m tasossa`, c.kind === 'kisko' ? `In ≈ ${f0(ED.r.lvIn)} A` : '']); });
+  $('layItems').innerHTML = `<table><tr><th>Tila</th><th>Laite / varaus</th><th>Mitat / vaatimus</th><th>Peruste</th></tr>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</table>`;
+}
+// ---------- päärender ----------
+function render() {
+  fillU();
+  const inp = readInp(); inp.proj = $('proj').value;
+  const r = compute(inp); LAST = r;
+  $('title').textContent = `Tulos – ${r.d.name}, ${r.U} kV`;
+  const k = (l, v) => `<div class="kpi"><span>${l}</span><b>${v}</b></div>`;
+  $('kpis').innerHTML = k('Mitoitusteho', `${f0(r.S)} kVA`) + k('Muuntajat', `${r.n} × ${r.unit} kVA`) + k('KJ-liittymisteho', `${f0(r.Stot)} kVA`) + k('Kuormitus normaali', `${f0(r.loadNormal)} %`) + k('Pääkytkin', r.main === 'VKE' ? 'VKE ' + r.fuse + ' A' : 'Katkaisija') + k(`In KJ (${r.U} kV)`, `${f1(r.Itot)} A`) + k('PJ In / muuntaja', `${f0(r.lvIn)} A`) + k('Kojeiston pituus ~', `${f1(r.swgLen / 1000)} m`);
+  $('conn').innerHTML = `<div class="note ${r.conn.lvl}"><em>${r.d.short}</em><b>Liittymistapa:</b> ${r.conn.t}</div><div class="note info"><em>${r.d.short}</em><b>Omistusraja:</b> ${r.d.ownership}</div>`;
+  $('sld').innerHTML = drawSLD(r);
+  $('cellTbl').innerHTML = `<table><tr><th>Tunnus</th><th>Kenno</th><th>Varustus</th><th>Lev. mm*</th></tr>${cellRows(r)}</table><p class="disc">*Kennoleveydet ohjeellisia (500/750 mm).${r.d.key === 'ves' ? ' VES: kaapelikenkien kiinnitys ~1500 mm kanaalin pohjasta.' : ''}</p>`;
+  const rat = r.d.ratings ? `<table style="margin-top:8px"><tr><th colspan="2">Carunan vähimmäisvaatimukset 20 kV liittymiskojeistolle</th></tr>${r.d.ratings.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('')}</table>` : '';
+  $('prot').innerHTML = `<table><tr><th>Kohde</th><th>Ratkaisu</th></tr><tr><td>Pääkytkinlaite</td><td>${r.main === 'VKE' ? `Varokekuormanerotin, sulake ${r.fuse} A` : 'Releohjattu katkaisija'}</td></tr><tr><td>Muuntajalähdöt</td><td>${r.direct ? 'Suora liityntä – pääkytkin suojaa muuntajan' : (r.tfFeeder === 'VKE' ? `VKE + sulake ${r.fuse} A / muuntaja` : 'Katkaisija + rele / muuntaja')}</td></tr><tr><td>Suojarele</td><td>${r.relay.length ? r.relay.join('<br>') : '–'}</td></tr><tr><td>Laskutusmittaus</td><td>KJ-mittaus, virtamuuntajat ~${r.ctMeas}/5 A (In ${f1(r.Itot)} A), jännitemuuntajat ${r.U}/√3 / 0,1/√3 kV.</td></tr><tr><td>PJ-puoli / muuntaja</td><td>In ≈ ${f0(r.lvIn)} A, Ik3 ≈ ${f1(r.ik)} kA (uk ${r.inp.uk} %). Jokaisella muuntajalla oma PJ-pääkeskus; keskusten yhdys aukiohjattu.</td></tr></table>${rat}`;
+  $('notes').innerHTML = r.notes.map(n => `<div class="note ${n.lvl}"><em>${n.src}</em>${n.t}</div>`).join('');
+  $('docs').innerHTML = '<ol>' + r.d.docs.map(x => `<li>${x}</li>`).join('') + '</ol>';
+  $('src').innerHTML = `<b>Käytetyt ohjeet:</b> ${r.d.ohje} – <a href="${r.d.url}" target="_blank">${r.d.url}</a><br>Konfiguraattori on esisuunnittelun työkalu. Sulakekoot, mittamuuntajien ensiöarvot, kennoleveydet, laitemitat ja -korkeudet, huoltovälit, yläpuolen varaukset, maasulkuvirta-arvio ja PJ-oikosulkuvirta ovat ohjeellisia laskentaoletuksia, eivät verkkoyhtiön vaatimuksia. Liittymispiste, liittymistapa ja releasettelut vahvistetaan verkkoyhtiön kanssa.`;
+  const lo = { tfType: $('tfType').value, swgDepth: +$('swgDepth').value, pjFront: +$('pjFront').value, comp: $('comp').checked, indoorKyt: $('indoorKyt').checked };
+  edLoad(r, lo); ED.r = r; edDraw(true);
+  const tf = TF_DIM[r.unit] || TF_DIM[3150];
+  $('layNotes').innerHTML = [`Muuntajan korkeus ~${tf[2]} mm → muuntajatilan vaadittu korkeus lasketaan tilakohtaisesti (asennuslattia + korkein laite + varaus laitteiden yllä).`, 'Haalausreitti ulkoa muuntajatilaan: kantavuus muuntajan painolle + nostovälineet, kuorma-autolla pääsy oven eteen.', r.d.key === 'ves' ? 'VES vaatii tasopiirustuksessa: KJ-kojeisto, läpiviennit, kaapelikanaali syvyyksineen, RTU-tilavaraus mittoineen ja ryhmäjohto, mittalaitekotelo, kaapelireitti RTU → riviliittimet sekä antennikaapelien reitit.' : '', r.d.key === 'caruna' ? 'Carunan kytkemö ensisijaisesti ulos; sisäkytkemölle verkkoyhtiöllä vapaa pääsy (Caruna 5.2).' : ''].filter(Boolean).map(n => `<div class="note info">${n}</div>`).join('');
+  $('stamp').textContent = 'Päivitetty ' + new Date().toLocaleString('fi-FI');
+}
+const dl = (svg, name) => { const b = new Blob([svg], { type: 'image/svg+xml' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; a.click(); };
+function dlLay() { const M = ED.M, V = viewOf(M, decoPts(ED.r, M).pts); dl(renderLayout(ED.r, M, V, { exportMode: true }), `Muuntamo_layout_${LAST.d.short}_${LAST.n}x${LAST.unit}kVA.svg`); }
+function dlSVG() { dl($('sld').innerHTML, `KJ-paakaavio_${LAST.d.short}_${LAST.n}x${LAST.unit}kVA.svg`); }
+const copyTbl = sel => navigator.clipboard.writeText([...document.querySelectorAll(sel + ' tr')].map(tr => [...tr.children].map(td => td.innerText).join('\t')).join('\n'));
+function copyItems() { copyTbl('#layItems'); } function copyList() { copyTbl('#cellTbl'); }
+$('addRoomSel').innerHTML = Object.entries(ROOM_PRESETS).map(([k, v]) => `<option value="${k}">${v[0]}</option>`).join('');
+document.querySelectorAll('aside input, aside select').forEach(e => e.addEventListener('input', render));
+fillU(); render();
+</script>
+</body>
+</html>
